@@ -598,7 +598,8 @@ async function loadInvoices(){
         :i.status==='waiting_confirm'?'<span class="badge b-waiting">⏳ รอตรวจ</span>'
         :'<span class="badge b-pending">รอจ่าย</span>';
       let act='';
-      if(i.status==='waiting_confirm') act+=`<button class="mini m-green" onclick="appr('${i.id}')">✅ อนุมัติ</button><button class="mini m-red" onclick="rej('${i.id}')">❌ ปฏิเสธ</button>`;
+      if(i.status==='waiting_confirm'){ act+=`<button class="mini m-green" onclick="appr('${i.id}')">✅ อนุมัติ</button><button class="mini m-red" onclick="rej('${i.id}')">❌ ปฏิเสธ</button>`;
+      act+=`<button class="mini m-gray" onclick="window.open('/api/dorm/invoices/${i.id}/slip','_blank')">👁️ ดูสลิป</button>`; }
       act+=`<button class="mini m-gold" onclick="window.open('/api/dorm/invoices/${i.id}/billcard','_blank')">🧾 QR บิล</button>`;
       act+=`<button class="mini m-gray" onclick="copyBill('${esc(i.bill_token)}')">🔗 ลิงก์บิล</button>`;
       if(i.status==='pending'){
