@@ -38,7 +38,8 @@
   .b-red { background:rgba(225,45,45,.15); color:#ff8f8f; border:1px solid rgba(225,45,45,.3); }
   .b-gold { background:rgba(212,175,55,.15); color:#d4af37; border:1px solid rgba(212,175,55,.3); }
   .b-gray { background:rgba(120,120,120,.15); color:#aab2aa; border:1px solid rgba(120,120,120,.3); }
-  .act { display:flex; gap:5px; flex-wrap:wrap; }
+  .act { display:grid; grid-template-columns:repeat(2, minmax(90px,1fr)); gap:5px; min-width:200px; }
+  .act .mini { margin:0; white-space:nowrap; }
   .mini { padding:5px 9px; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:600; }
   .m-gold{background:#d4af37;color:#0b0f0d} .m-green{background:#1e7d34;color:#fff}
   .m-red{background:#a32a2a;color:#fff} .m-gray{background:#333;color:#ccc}
