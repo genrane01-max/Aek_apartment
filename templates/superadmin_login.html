@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin — เข้าสู่ระบบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0b0f0d">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Prompt',sans-serif;
+    background: radial-gradient(circle at 50% 30%, #1a1a1f 0%, #0c0c0e 70%);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    color:#e8e6e0;
+  }
+  .card {
+    background:linear-gradient(160deg,#17171b,#101013);
+    border:1px solid rgba(212,175,55,.35);
+    border-radius:20px; padding:48px 44px; width:min(400px,92vw);
+    box-shadow:0 30px 60px rgba(0,0,0,.6), 0 0 40px rgba(212,175,55,.06);
+    text-align:center;
+  }
+  .logo { font-family:'Playfair Display',serif; font-size:34px; letter-spacing:2px; font-weight:700;
+    background:linear-gradient(135deg,#f5e08c,#d4af37 55%,#9a7b1e);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { color:#9a948a; font-size:12px; margin:8px 0 32px; letter-spacing:4px; text-transform:uppercase; }
+  label { display:block; text-align:left; color:#c9c4ba; font-size:13px; margin-bottom:8px; }
+  input { width:100%; padding:14px 16px; border-radius:10px; border:1px solid #2c2c31;
+    background:#0e0e11; color:#fff; font-family:'Prompt',sans-serif; font-size:15px; outline:none;}
+  input:focus { border-color:#d4af37; box-shadow:0 0 0 3px rgba(212,175,55,.15); }
+  button { width:100%; margin-top:22px; padding:14px; border:none; border-radius:10px;
+    background:linear-gradient(135deg,#e8c75e,#c9a227); color:#1a1405; font-weight:600;
+    font-size:16px; font-family:'Prompt',sans-serif; cursor:pointer; letter-spacing:1px;}
+  button:hover { filter:brightness(1.1); }
+  .err { color:#ff7b7b; font-size:13px; margin-top:14px; min-height:18px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">DORM BILLING</div>
+    <div class="sub">Super Admin Console</div>
+    <label for="password">รหัสผ่านผู้ดูแลระบบ</label>
+    <input type="password" id="password" placeholder="••••••••" autofocus>
+    <button onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="err" id="err"></div>
+  </div>
+<script>
+async function doLogin(){
+  const pwd = document.getElementById('password').value;
+  if(!pwd){ document.getElementById('err').textContent='กรุณากรอกรหัสผ่าน'; return; }
+  try{
+    const r = await fetch('/api/superadmin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+    const d = await r.json();
+    if(d.success){ location.href='/superadmin'; }
+    else{ document.getElementById('err').textContent = d.message||'รหัสผ่านไม่ถูกต้อง'; }
+  }catch(e){ document.getElementById('err').textContent='เกิดข้อผิดพลาด กรุณาลองใหม่'; }
+}
+document.getElementById('password').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
