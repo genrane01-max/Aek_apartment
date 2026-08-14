@@ -187,6 +187,9 @@
         <div><label>ค่าขยะ/เดือน (บาท)</label><input id="rmGarbage" type="number" step="0.01" placeholder="0"></div>
         <div><label>ค่าส่วนกลาง/เดือน (บาท)</label><input id="rmService" type="number" step="0.01" placeholder="0"></div>
       </div>
+      <label style="margin-top:16px;">➕ ค่าใช้จ่ายอื่น (ระบุชื่อ+ยอดได้ เช่น ค่า Wi-Fi 100฿)</label>
+      <div id="feeList"></div>
+      <button type="button" class="mini m-gray" style="margin:4px 0 0;" onclick="addFeeRow('feeList','','')">➕ เพิ่มรายการ</button>
       <button class="btn btn-gold" onclick="addRoom()">เพิ่มห้อง</button>
       <div class="msg" id="msgRoom"></div>
     </div>
@@ -318,7 +321,7 @@
   </div>
 </div>
 
-<!-- ===== Modal แก้ไขบิล (มีค่าขยะ + ค่าส่วนกลาง) ===== -->
+<!-- ===== Modal แก้ไขบิล (มีค่าขยะ + ค่าส่วนกลาง + ค่าใช้จ่ายอื่น) ===== -->
 <div class="modal-overlay" id="editModal" style="display:none;">
   <div class="modal">
     <span class="modal-x" onclick="closeModal('editModal')">✕</span>
@@ -328,6 +331,9 @@
     <label>ค่าเช่า (บาท)</label><input id="editRent" type="number" step="0.01">
     <label>ค่าขยะ (บาท)</label><input id="editGarbage" type="number" step="0.01">
     <label>ค่าส่วนกลาง (บาท)</label><input id="editService" type="number" step="0.01">
+    <label style="margin-top:14px;">➕ ค่าใช้จ่ายอื่น</label>
+    <div id="editFeeList"></div>
+    <button type="button" class="mini m-gray" style="margin:4px 0 0;" onclick="addFeeRow('editFeeList','','')">➕ เพิ่มรายการ</button>
     <p style="color:#6b736b; font-size:12px; margin-top:8px;">ค่าน้ำ/ไฟ คำนวณจากเรทของหอให้อัตโนมัติ</p>
     <div class="modal-actions">
       <button class="mini m-gray" onclick="closeModal('editModal')">ยกเลิก</button>
@@ -357,6 +363,9 @@
       <div><label>ค่าขยะ/เดือน (บาท)</label><input id="erGarbage" type="number" step="0.01"></div>
       <div><label>ค่าส่วนกลาง/เดือน (บาท)</label><input id="erService" type="number" step="0.01"></div>
     </div>
+    <label style="margin-top:16px;">➕ ค่าใช้จ่ายอื่น</label>
+    <div id="erFeeList"></div>
+    <button type="button" class="mini m-gray" style="margin:4px 0 0;" onclick="addFeeRow('erFeeList','','')">➕ เพิ่มรายการ</button>
     <div class="modal-actions">
       <button class="mini m-gray" onclick="closeModal('editRoomModal')">ยกเลิก</button>
       <button class="mini m-gold" onclick="submitEditRoom()">💾 บันทึก</button>
