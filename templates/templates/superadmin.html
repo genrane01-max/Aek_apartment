@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin | ระบบบิลหอพัก</title>
+<meta name="theme-color" content="#0b0f0d">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,sans-serif; }
+  body { background:#0b0f0d; color:#e8ece8; min-height:100vh; }
+  .header { display:flex; align-items:center; justify-content:space-between; padding:16px 22px;
+    background:linear-gradient(90deg,#121712,#1a2218); border-bottom:1px solid rgba(212,175,55,.25); }
+  .header .logo { font-size:18px; font-weight:700; }
+  .header .logo span { color:#d4af37; }
+  .header .right { display:flex; align-items:center; gap:14px; }
+  .header .right a { color:#aab2aa; text-decoration:none; font-size:13px; }
+  .header .right a:hover { color:#d4af37; }
+  .btn-sm { padding:7px 14px; border-radius:8px; border:none; cursor:pointer; font-size:12px; font-weight:600; }
+  .btn-ghost { background:transparent; color:#aab2aa; border:1px solid #2a332c; }
+  .btn-ghost:hover { color:#fff; border-color:#d4af37; }
+  .content { padding:20px 22px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:22px; }
+  .stat { background:#141a16; border:1px solid #222b23; border-radius:14px; padding:18px; }
+  .stat .num { font-size:28px; font-weight:800; color:#d4af37; }
+  .stat .lbl { color:#8a8f8a; font-size:12px; margin-top:4px; }
+  .stat.rev { border-color:rgba(212,175,55,.4); }
+  .card { background:#141a16; border:1px solid #222b23; border-radius:14px; padding:20px; }
+  .card h3 { color:#d4af37; font-size:15px; margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:#d4af37; padding:9px 8px; border-bottom:1px solid #2a332c; white-space:nowrap; }
+  td { padding:9px 8px; border-bottom:1px solid #1c241e; color:#cfd6cf; }
+  tr:hover td { background:#18201a; }
+  .badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; }
+  .b-green { background:rgba(46,160,67,.15); color:#7ee2a0; border:1px solid rgba(46,160,67,.3); }
+  .b-red { background:rgba(225,45,45,.15); color:#ff8f8f; border:1px solid rgba(225,45,45,.3); }
+  .b-gold { background:rgba(212,175,55,.15); color:#d4af37; border:1px solid rgba(212,175,55,.3); }
+  .b-gray { background:rgba(120,120,120,.15); color:#aab2aa; border:1px solid rgba(120,120,120,.3); }
+  .act { display:flex; gap:5px; flex-wrap:wrap; }
+  .mini { padding:5px 9px; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:600; }
+  .m-gold{background:#d4af37;color:#0b0f0d} .m-green{background:#1e7d34;color:#fff}
+  .m-red{background:#a32a2a;color:#fff} .m-gray{background:#333;color:#ccc}
+  .empty { text-align:center; color:#6b736b; padding:26px; font-size:13px; }
+  .msg { margin-top:12px; padding:10px 12px; border-radius:8px; font-size:13px; display:none; }
+  .msg.ok { display:block; background:rgba(46,160,67,.12); color:#7ee2a0; }
+  .msg.err { display:block; background:rgba(225,45,45,.12); color:#ff8f8f; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; z-index:999; padding:16px; }
+  .modal { background:#141a16; border:1px solid rgba(212,175,55,.35); border-radius:14px; padding:22px; width:100%; max-width:380px; }
+  .modal h3 { color:#d4af37; font-size:15px; margin-bottom:10px; }
+  .modal p { color:#aab2aa; font-size:12px; margin-bottom:4px; }
+  .modal label { display:block; color:#aab2aa; font-size:12px; margin:12px 0 5px; }
+  .modal input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #2a332c; background:#0f1411; color:#fff; font-size:14px; outline:none; }
+  .modal input:focus { border-color:#d4af37; }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+  .credit { text-align:center; color:#6b736b; font-size:11px; margin-top:24px; padding-bottom:16px; }
+  .credit a { color:#d4af37; text-decoration:none; }
+  /* ===== ✨ Luxury Polish ===== */
+  body { background:#0a0c0a; }
+  .header { background:linear-gradient(90deg,#0e130e,#171e14 50%,#0e130e);
+    border-bottom:1px solid rgba(212,175,55,.35); box-shadow:0 1px 24px rgba(212,175,55,.08); }
+  .header .logo span, .stat .num { background:linear-gradient(135deg,#f5d97a,#c9a227);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .tab.active, .m-gold, .btn-gold { background:linear-gradient(135deg,#f5d97a,#c9a227 60%,#a8852a); }
+  .card { background:linear-gradient(180deg,#141a15,#0f130e); border:1px solid #242c20;
+    box-shadow:0 8px 30px rgba(0,0,0,.35); }
+  .card h3, th { letter-spacing:.4px; }
+  .btn-gold { box-shadow:0 6px 18px rgba(212,175,55,.25); }
+  .btn-gold:hover { box-shadow:0 10px 26px rgba(212,175,55,.4); transform:translateY(-1px); }
+  .stat { border:1px solid #242c20; background:linear-gradient(180deg,#151b14,#0e130d); }
+  .modal { border:1px solid rgba(212,175,55,.45); box-shadow:0 20px 60px rgba(0,0,0,.6); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">👑 Super Admin <span>| ระบบบิลหอพัก</span></div>
+  <div class="right">
+    <a href="/manual" target="_blank">📖 คู่มือ</a>
+    <button class="btn-sm btn-ghost" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- ===== สถิติรวม ===== -->
+  <div class="stats">
+    <div class="stat"><div class="num" id="stDorms">-</div><div class="lbl">หอพักทั้งหมด</div></div>
+    <div class="stat"><div class="num" id="stInvoices">-</div><div class="lbl">บิลทั้งหมด</div></div>
+    <div class="stat"><div class="num" id="stWaiting">-</div><div class="lbl">บิลรอตรวจ</div></div>
+    <div class="stat"><div class="num" id="stPaid">-</div><div class="lbl">ยอดเก็บจากผู้เช่า (฿)</div></div>
+    <div class="stat rev"><div class="num" id="stRevenue">-</div><div class="lbl">💰 รายได้แพลตฟอร์ม (฿)</div></div>
+  </div>
+
+  <!-- ===== ตารางหอพัก ===== -->
+  <div class="card">
+    <h3>🏢 รายชื่อหอพัก (หอที่จ่าย add-on แต่ยังไม่ตั้งสาขา จะขึ้นก่อน)</h3>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Username</th><th>ชื่อหอ</th><th>วันหมดอายุ</th><th>รอตรวจ</th><th>ยอดเก็บ (฿)</th>
+          <th>พร้อมเพย์</th><th>สาขาตรวจสลิป</th><th>Add-on</th><th>จัดการ</th>
+        </tr></thead>
+        <tbody id="dormRows"></tbody>
+      </table>
+    </div>
+    <div id="dormEmpty" class="empty" style="display:none;">ยังไม่มีหอพัก — รอเจ้าของหอสมัครใช้งานเอง</div>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<!-- ===== Modal ตั้งสาขา (Branch ID + API Key) ===== -->
+<div class="modal-overlay" id="branchModal" style="display:none;">
+  <div class="modal">
+    <h3>🏢 ตั้งสาขา SlipOK</h3>
+    <p id="branchModalText"></p>
+    <label>Branch ID (รหัสสาขา)</label>
+    <input id="branchInput" placeholder="เช่น 73160">
+    <label>API Key ของสาขานี้</label>
+    <input id="branchKeyInput" placeholder="เช่น SLIPOKXXXXXXXX">
+    <div class="modal-actions">
+      <button class="mini m-gray" onclick="closeModal('branchModal')">ยกเลิก</button>
+      <button class="mini m-gold" onclick="submitBranch()">💾 บันทึกสาขา</button>
+    </div>
+    <div class="msg" id="branchModalMsg"></div>
+  </div>
+</div>
+
+<!-- ===== Modal รีเซ็ตรหัส ===== -->
+<div class="modal-overlay" id="pwdModal" style="display:none;">
+  <div class="modal">
+    <h3>🔑 รีเซ็ตรหัสผ่าน</h3>
+    <p id="pwdModalText"></p>
+    <label>รหัสผ่านใหม่ (อย่างน้อย 4 ตัว)</label>
+    <input id="pwdInput" type="password" placeholder="ตั้งรหัสใหม่">
+    <div class="modal-actions">
+      <button class="mini m-gray" onclick="closeModal('pwdModal')">ยกเลิก</button>
+      <button class="mini m-gold" onclick="submitPwd()">💾 บันทึกรหัส</button>
+    </div>
+    <div class="msg" id="pwdModalMsg"></div>
+  </div>
+</div>
+
+<!-- ===== Modal ต่ออายุ ===== -->
+<div class="modal-overlay" id="expModal" style="display:none;">
+  <div class="modal">
+    <h3>📅 ต่ออายุ / ตั้งวันหมดอายุ</h3>
+    <p id="expModalText"></p>
+    <label>วันหมดอายุใหม่ (YYYY-MM-DD)</label>
+    <input id="expInput" placeholder="เช่น 2026-12-31">
+    <div class="modal-actions">
+      <button class="mini m-gray" onclick="closeModal('expModal')">ยกเลิก</button>
+      <button class="mini m-gold" onclick="submitExp()">💾 บันทึก</button>
+    </div>
+    <div class="msg" id="expModalMsg"></div>
+  </div>
+</div>
+
+<!-- ===== Modal ลบหอพัก ===== -->
+<div class="modal-overlay" id="delModal" style="display:none;">
+  <div class="modal">
+    <h3>🗑️ ลบหอพักถาวร</h3>
+    <p id="delModalText"></p>
+    <p style="color:#ff8f8f; font-size:12px;">⚠️ ลบแล้วกู้คืนไม่ได้ (ลบห้อง + บิล + ข้อมูลทั้งหมด)</p>
+    <label>พิมพ์ username เพื่อยืนยันการลบ</label>
+    <input id="delInput" placeholder="พิมพ์ username">
+    <div class="modal-actions">
+      <button class="mini m-gray" onclick="closeModal('delModal')">ยกเลิก</button>
+      <button class="mini m-red" onclick="submitDel()">🗑️ ลบถาวร</button>
+    </div>
+    <div class="msg" id="delModalMsg"></div>
+  </div>
+</div>
+
+<div class="credit">พัฒนาโดยใช้ <a href="https://freebuff.com" target="_blank">Freebuff AI</a> · ระบบบิลหอพักอัตโนมัติ</div>
+
+<script>
+const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = new Date().toISOString().slice(0,10);
+let curBranchId=null, curPwdId=null, curExpId=null, curDelId=null, curDelName='';
+
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+function showMsg(id,t,ok){ const el=document.getElementById(id); el.className='msg '+(ok?'ok':'err'); el.textContent=t; }
+function topMsg(t,ok){ const el=document.getElementById('msg'); el.className='msg '+(ok?'ok':'err'); el.textContent=t; }
+
+async function loadAll(){
+  try{
+    const rs=await fetch('/api/superadmin/stats'); const ds=await rs.json();
+    if(!ds.success){ location.href='/superadmin/login'; return; }
+    document.getElementById('stDorms').textContent=ds.dorm_count;
+    document.getElementById('stInvoices').textContent=ds.total_invoices;
+    document.getElementById('stWaiting').textContent=ds.total_waiting;
+    document.getElementById('stPaid').textContent=Number(ds.total_paid).toLocaleString('th-TH');
+    document.getElementById('stRevenue').textContent=Number(ds.platform_revenue||0).toLocaleString('th-TH');
+
+    const rd=await fetch('/api/superadmin/dorms'); const dd=await rd.json();
+    const rows=document.getElementById('dormRows');
+    document.getElementById('dormEmpty').style.display=(dd.dorms&&dd.dorms.length)?'none':'block';
+    if(!dd.dorms||!dd.dorms.length){ rows.innerHTML=''; return; }
+
+    // เรียง: หอที่จ่าย add-on แล้วแต่ยังไม่ตั้งสาขา ขึ้นก่อน
+    dd.dorms.sort((a,b)=>{
+      const pa=(a.addon_autocheck_active && !a.slipok_branch_id)?0:1;
+      const pb=(b.addon_autocheck_active && !b.slipok_branch_id)?0:1;
+      return pa-pb;
+    });
+
+    rows.innerHTML=dd.dorms.map(d=>{
+      const expired=!d.is_active || (d.expiry_date && d.expiry_date<today);
+      const expBadge=expired
+        ? '<span class="badge b-red">⛔ หมดอายุ'+(d.is_active?'':' / ระงับ')+'</span>'
+        : '<span class="badge b-green">🟢 '+esc(d.expiry_date||'-')+'</span>';
+      const branch=(d.slipok_branch_id&&d.slipok_api_key)
+        ? '<span class="badge b-gold">🏢 '+esc(d.slipok_branch_id)+' ✅</span>'
+        : (d.slipok_branch_id
+            ? '<span class="badge b-red">⚠️ มี Branch แต่ยังไม่มี Key</span>'
+            : '<span class="badge b-red">⚠️ รอตั้งสาขา</span>');
+      const addon=d.addon_autocheck_active
+        ? '<span class="badge b-gold">🟢 '+esc(d.addon_autocheck_credits||0)+' ครั้ง</span>'
+        : '<span class="badge b-gray">ปิด</span>';
+      return `<tr>
+        <td><b>${esc(d.username)}</b></td>
+        <td>${esc(d.name||'-')}</td>
+        <td>${expBadge}</td>
+        <td>${esc(d.waiting_count||0)}</td>
+        <td>${Number(d.paid_total||0).toLocaleString('th-TH')}</td>
+        <td>${esc(d.promptpay_number||'-')}</td>
+        <td>${branch}</td>
+        <td>${addon}</td>
+        <td><div class="act">
+          <button class="mini m-gold" onclick="openBranchModal('${d.id}','${esc(d.username)}')">🏢 ตั้งสาขา</button>
+          <button class="mini m-gray" onclick="openExpModal('${d.id}','${esc(d.username)}','${esc(d.expiry_date||'')}')">📅 ต่ออายุ</button>
+          <button class="mini ${d.is_active?'m-red':'m-green'}" onclick="toggleDorm('${d.id}')">${d.is_active?'⛔ ระงับ':'✅ เปิด'}</button>
+          <button class="mini m-gray" onclick="openPwdModal('${d.id}','${esc(d.username)}')">🔑 รีเซ็ตรหัส</button>
+          <button class="mini m-red" onclick="openDelModal('${d.id}','${esc(d.username)}')">🗑️ ลบหอ</button>
+        </div></td></tr>`;
+    }).join('');
+  }catch(e){ topMsg('❌ '+e.message,false); }
+}
+
+/* ---- ตั้งสาขา (Branch ID + API Key) ---- */
+function openBranchModal(id,name){
+  curBranchId=id;
+  document.getElementById('branchModalText').textContent='หอ: '+name+' — สร้างสาขาใน SlipOK ผูกพร้อมเพย์ของหอนี้ แล้วกรอกทั้ง 2 ช่อง (คีย์ของแต่ละสาขาจะคนละตัวกัน):';
+  document.getElementById('branchInput').value='';
+  document.getElementById('branchKeyInput').value='';
+  document.getElementById('branchModalMsg').className='msg';
+  document.getElementById('branchModal').style.display='flex';
+}
+async function submitBranch(){
+  const b=document.getElementById('branchInput').value.trim();
+  const k=document.getElementById('branchKeyInput').value.trim();
+  const msgEl=document.getElementById('branchModalMsg');
+  if(!b || !k){ msgEl.className='msg err'; msgEl.textContent='กรอกทั้ง Branch ID และ API Key ก่อน'; return; }
+  try{
+    const r=await fetch('/api/superadmin/dorms/'+curBranchId+'/branch',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({slipok_branch_id:b, slipok_api_key:k})});
+    const d=await r.json();
+    msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
+    if(d.success){ setTimeout(()=>{ closeModal('branchModal'); loadAll(); },1200); }
+  }catch(e){ msgEl.className='msg err'; msgEl.textContent='❌ '+e.message; }
+}
+
+/* ---- รีเซ็ตรหัส ---- */
+function openPwdModal(id,name){
+  curPwdId=id;
+  document.getElementById('pwdModalText').textContent='หอ: '+name;
+  document.getElementById('pwdInput').value='';
+  document.getElementById('pwdModalMsg').className='msg';
+  document.getElementById('pwdModal').style.display='flex';
+}
+async function submitPwd(){
+  const p=document.getElementById('pwdInput').value.trim();
+  const msgEl=document.getElementById('pwdModalMsg');
+  if(!p || p.length<4){ msgEl.className='msg err'; msgEl.textContent='รหัสต้องยาวอย่างน้อย 4 ตัว'; return; }
+  try{
+    const r=await fetch('/api/superadmin/dorms/'+curPwdId+'/reset_password',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p})});
+    const d=await r.json();
+    msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
+    if(d.success){ setTimeout(()=>closeModal('pwdModal'),1200); }
+  }catch(e){ msgEl.className='msg err'; msgEl.textContent='❌ '+e.message; }
+}
+
+/* ---- ต่ออายุ ---- */
+function openExpModal(id,name,cur){
+  curExpId=id;
+  document.getElementById('expModalText').textContent='หอ: '+name+' — หมดอายุปัจจุบัน: '+esc(cur||'-');
+  document.getElementById('expInput').value=cur||today;
+  document.getElementById('expModalMsg').className='msg';
+  document.getElementById('expModal').style.display='flex';
+}
+async function submitExp(){
+  const e=document.getElementById('expInput').value.trim();
+  const msgEl=document.getElementById('expModalMsg');
+  if(!e || !/^\d{4}-\d{2}-\d{2}$/.test(e)){ msgEl.className='msg err'; msgEl.textContent='รูปแบบวันที่ต้องเป็น YYYY-MM-DD'; return; }
+  try{
+    const r=await fetch('/api/superadmin/dorms/'+curExpId+'/package',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({expiry_date:e})});
+    const d=await r.json();
+    msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
+    if(d.success){ setTimeout(()=>{ closeModal('expModal'); loadAll(); },1200); }
+  }catch(err){ msgEl.className='msg err'; msgEl.textContent='❌ '+err.message; }
+}
+
+/* ---- ลบหอพัก ---- */
+function openDelModal(id,name){
+  curDelId=id; curDelName=name;
+  document.getElementById('delModalText').textContent='หอ: '+name;
+  document.getElementById('delInput').value='';
+  document.getElementById('delModalMsg').className='msg';
+  document.getElementById('delModal').style.display='flex';
+}
+async function submitDel(){
+  const t=document.getElementById('delInput').value.trim();
+  const msgEl=document.getElementById('delModalMsg');
+  if(t.toLowerCase()!==curDelName.toLowerCase()){
+    msgEl.className='msg err'; msgEl.textContent='username ไม่ตรงกัน — ไม่ได้ลบ'; return;
+  }
+  try{
+    const r=await fetch('/api/superadmin/dorms/'+curDelId+'/delete',{method:'POST'}); const d=await r.json();
+    msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
+    if(d.success){ setTimeout(()=>{ closeModal('delModal'); loadAll(); },1200); }
+  }catch(e){ msgEl.className='msg err'; msgEl.textContent='❌ '+e.message; }
+}
+
+/* ---- ระงับ/เปิด ---- */
+async function toggleDorm(id){
+  if(!confirm('สลับสถานะหอนี้?')) return;
+  const r=await fetch('/api/superadmin/dorms/'+id+'/toggle',{method:'POST'}); const d=await r.json();
+  topMsg(d.success?'✅ '+d.message:'❌ '+(d.message||'error'),d.success); loadAll();
+}
+
+async function doLogout(){ await fetch('/api/superadmin/logout',{method:'POST'}); location.href='/superadmin/login'; }
+loadAll();
+setInterval(loadAll, 60000);  // รีเฟรชทุก 1 นาที
+</script>
+</body>
+</html>
