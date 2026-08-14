@@ -654,6 +654,7 @@ def dorm_edit_room(room_id):
         service_fee = float(data.get("service_fee") or 0)
     except ValueError:
         return jsonify({"success": False, "message": "ตัวเลขไม่ถูกต้อง"}), 400
+    extra_fees = parse_extra_fees(data.get("extra_fees"))
     update = {
         "tenant_name": (data.get("tenant_name") or "").strip(),
         "phone": (data.get("phone") or "").strip(),
@@ -662,6 +663,7 @@ def dorm_edit_room(room_id):
         "deposit_amount": deposit_amount,
         "garbage_fee": garbage_fee,
         "service_fee": service_fee,
+        "extra_fees": extra_fees,
     }
     ds = (data.get("deposit_status") or "").strip()
     if ds in ("none", "received", "returned"):
