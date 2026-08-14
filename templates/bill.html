@@ -105,7 +105,7 @@
     {% endif %}
 
     <div class="print-only">📄 ใบแจ้งหนี้ — ชำระผ่านหน้าเว็บ สแกน QR ลิงก์บิลที่เจ้าของหอส่งให้</div>
-    <div class="foot">— ขอบคุณที่ชำระค่าเช่า —<br>{{ dorm.name }}</div>
+    <div class="foot">— ขอบคุณที่ชำระค่าเช่า —<br>{{ dorm.name }}{% if dorm.contact_info %}<br>{{ dorm.contact_info }}{% endif %}</div>
   </div>
 
 <script>
