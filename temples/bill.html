@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใบแจ้งหนี้ | {{ dorm.name }}</title>
+<meta name="theme-color" content="#0b0f0d">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Sarabun','Segoe UI',sans-serif; }
+  body { background:#e9e5da; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .receipt { width:100%; max-width:440px; background:#fffdf7; border-radius:18px; padding:30px 28px;
+    box-shadow:0 18px 50px rgba(0,0,0,.25); border:1px solid rgba(212,175,55,.4); }
+  .top { text-align:center; border-bottom:2px dashed #d4af37; padding-bottom:16px; margin-bottom:16px; }
+  .top h1 { font-family:'Sarabun',sans-serif; color:#1a1a1a; font-size:22px; font-weight:700; letter-spacing:0; }
+  .top .dorm { color:#7a7260; font-size:13px; margin-top:2px; }
+  .top .sub-en { color:#d4af37; font-size:10px; letter-spacing:5px; text-transform:uppercase; margin-top:4px; }
+  .meta { margin:12px 0; }
+  .row { display:flex; justify-content:space-between; padding:4px 0; font-size:13.5px; color:#333; }
+  .row b { color:#1a1a1a; }
+  .items { margin:14px 0; }
+  .item { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px dotted #cfc9ba; font-size:13.5px; color:#444; }
+  .total { display:flex; justify-content:space-between; align-items:center; margin-top:16px;
+    background:linear-gradient(135deg,#f5d97a,#c9a227); color:#1a1a1a; padding:13px 16px;
+    border-radius:12px; font-weight:700; font-size:16px; }
+  .pay { text-align:center; margin:18px 0 6px; }
+  .pay .note { font-size:12px; color:#8a7a4a; background:#fdf6e0; border:1px dashed #d4af37;
+    border-radius:10px; padding:8px 10px; margin-bottom:10px; line-height:1.7; }
+  .pay img { width:190px; height:190px; background:#fff; border:1px solid #ddd; border-radius:14px; padding:8px; }
+  .pay .pp { font-size:13px; color:#555; margin-top:8px; }
+  .pay .pp b { color:#1a1a1a; }
+  .btn2 { display:inline-block; margin-top:10px; padding:8px 16px; border-radius:9px;
+    border:1px solid #d4af37; background:#fffdf4; color:#a8852a; font-family:inherit;
+    font-size:12px; font-weight:700; cursor:pointer; }
+  .upload { margin-top:16px; }
+  .upload label { display:block; text-align:center; font-size:13px; color:#777; margin-bottom:8px; }
+  .upload input[type=file] { width:100%; padding:12px; border:2px dashed #d4af37; border-radius:12px;
+    background:#fffdf4; color:#444; font-family:inherit; font-size:13px; cursor:pointer; }
+  .btn { width:100%; margin-top:12px; padding:13px; border:none; border-radius:12px; cursor:pointer;
+    font-family:inherit; font-size:15px; font-weight:700; color:#131005;
+    background:linear-gradient(135deg,#f5d97a,#c9a227 55%,#a8852a); box-shadow:0 8px 20px rgba(212,175,55,.3); }
+  .btn:hover { transform:translateY(-1px); }
+  .btn:disabled { opacity:.5; transform:none; }
+  .msg { margin-top:14px; padding:12px; border-radius:10px; font-size:13.5px; display:none; text-align:center; }
+  .msg.ok { display:block; background:rgba(46,160,67,.12); color:#1e7d34; border:1px solid rgba(46,160,67,.3); }
+  .msg.err { display:block; background:rgba(225,45,45,.12); color:#a32a2a; border:1px solid rgba(225,45,45,.3); }
+  .status { text-align:center; padding:12px; border-radius:12px; font-size:14px; font-weight:700; margin-top:14px; }
+  .st-paid { background:rgba(46,160,67,.12); color:#1e7d34; border:1px solid rgba(46,160,67,.3); }
+  .st-waiting { background:rgba(240,140,60,.12); color:#b45f1a; border:1px solid rgba(240,140,60,.3); }
+  .foot { text-align:center; font-size:11px; color:#aaa; margin-top:16px; }
+  .print-only { display:none; text-align:center; font-size:12px; color:#555; margin-top:10px; }
+  @media print {
+    body { background:#fff; padding:0; }
+    .receipt { box-shadow:none; border-radius:0; max-width:100%; }
+    .pay, .upload, .btn, .msg, .btn2 { display:none !important; }
+    .print-only { display:block !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="top">
+      <h1>ใบแจ้งหนี้ค่าเช่า</h1>
+      <div class="dorm">🏢 {{ dorm.name }}</div>
+      <div class="sub-en">INVOICE</div>
+    </div>
+
+    <div class="meta">
+      <div class="row"><span>เลขที่บิล</span><b>INV-{{ invoice.bill_token[:8]|upper }}</b></div>
+      <div class="row"><span>ห้อง</span><b>{{ invoice.room_no }}</b></div>
+      <div class="row"><span>ผู้เช่า</span><b>{{ invoice.tenant_name or '-' }}</b></div>
+      <div class="row"><span>ประจำเดือน</span><b>{{ invoice.month }}/{{ invoice.year }}</b></div>
+    </div>
+
+    <div class="items">
+      <div class="item"><span>ค่าน้ำ {{ invoice.water_usage }} หน่วย × {{ dorm.water_rate }}฿</span><span>{{ "%.2f"|format(invoice.water_cost) }} ฿</span></div>
+      <div class="item"><span>ค่าไฟ {{ invoice.elec_usage }} หน่วย × {{ dorm.elec_rate }}฿</span><span>{{ "%.2f"|format(invoice.elec_cost) }} ฿</span></div>
+      <div class="item"><span>ค่าเช่า</span><span>{{ "%.2f"|format(invoice.rent_amount) }} ฿</span></div>
+    </div>
+
+    <div class="total"><span>ยอดรวมทั้งสิ้น</span><span>{{ "%.2f"|format(invoice.total_amount) }} ฿</span></div>
+
+    {% if invoice.status == 'paid' %}
+      <div class="status st-paid">✅ ชำระเงินแล้ว ขอบคุณครับ</div>
+    {% elif invoice.status == 'waiting_confirm' %}
+      <div class="status st-waiting">⏳ รอเจ้าของหอตรวจสอบสลิป กรุณารอสักครู่</div>
+    {% else %}
+      <div class="pay">
+        <div class="note">📱 <b>ใช้แอปธนาคารสแกน QR นี้</b> (SCB / KBANK / GSB ฯลฯ)<br>
+        ถ้าใช้ LINE สแกนแล้วขึ้น LINE Pay → <b>ปิด แล้วสแกนด้วยแอปธนาคารแทน</b></div>
+        <img src="{{ pay_qr }}" alt="QR จ่ายเงิน">
+        <div class="pp">ชำระผ่านพร้อมเพย์: <b>{{ dorm.promptpay_number }}</b><br>ยอด <b>{{ "%.2f"|format(invoice.total_amount) }} บาท</b></div>
+        <button class="btn2" onclick="copyPp()">📋 คัดลอกเลขพร้อมเพย์</button>
+      </div>
+      <div class="upload">
+        <label>📎 แนบรูปสลิปที่โอนแล้ว</label>
+        <input type="file" id="slipFile" accept="image/*">
+        <button class="btn" id="btnPay" onclick="doPay()">ยืนยันการชำระเงิน</button>
+      </div>
+      <div class="msg" id="payMsg"></div>
+    {% endif %}
+
+    <div class="print-only">📄 ใบแจ้งหนี้ — ชำระผ่านหน้าเว็บ สแกน QR ลิงก์บิลที่เจ้าของหอส่งให้</div>
+    <div class="foot">— ขอบคุณที่ชำระค่าเช่า —<br>{{ dorm.name }}</div>
+  </div>
+
+<script>
+  function showMsg(ok, text){
+    const el=document.getElementById('payMsg');
+    el.className='msg '+(ok?'ok':'err'); el.textContent=text;
+  }
+  function copyPp(){
+    const pp='{{ dorm.promptpay_number }}';
+    const done=()=>showMsg(true,'✅ คัดลอกเลขพร้อมเพย์แล้ว — เปิดแอปธนาคาร > โอนเงิน > วางเลขนี้ได้เลย');
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(pp).then(done).catch(done); }
+    else done();
+  }
+  async function doPay(){
+    const f=document.getElementById('slipFile');
+    if(!f.files.length){ showMsg(false,'กรุณาเลือกไฟล์สลิปก่อน'); return; }
+    const btn=document.getElementById('btnPay'); btn.disabled=true; btn.textContent='กำลังตรวจสอบ...';
+    const fd=new FormData(); fd.append('file', f.files[0]);
+    try{
+      const token=location.pathname.split('/').pop();
+      const r=await fetch('/bill/'+token+'/pay',{method:'POST',body:fd});
+      const d=await r.json();
+      showMsg(d.success, d.message||'เกิดข้อผิดพลาด');
+      if(d.success) setTimeout(()=>location.reload(), 1800);
+    }catch(e){ showMsg(false,'เกิดข้อผิดพลาด: '+e.message); }
+    btn.disabled=false; btn.textContent='ยืนยันการชำระเงิน';
+  }
+</script>
+</body>
+</html>
