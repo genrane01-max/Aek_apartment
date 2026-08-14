@@ -630,6 +630,7 @@ async function loadInvoices(){
     const r=await fetch(`/api/dorm/invoices?month=${document.getElementById('invMonth').value}&year=${document.getElementById('invYear').value}`);
     const d=await r.json(); if(!d.success) return;
     const invs=d.invoices||[];
+    invsCache=invs;
     document.getElementById('invEmpty').style.display=invs.length?'none':'block';
     const fmt=n=>Number(n||0).toLocaleString('th-TH');
     document.getElementById('invTotal').textContent=fmt(invs.reduce((s,i)=>s+Number(i.total_amount||0),0));
