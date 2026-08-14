@@ -230,6 +230,12 @@
         <div><label>ปี (พ.ศ.)</label><select id="invYear"></select></div>
         <div style="flex:0 0 auto;"><button class="btn btn-green" style="margin-top:0;" onclick="exportCsv()">📥 Excel</button></div>
       </div>
+      <div id="invSummary" style="display:flex; gap:14px; flex-wrap:wrap; margin:12px 0 4px; font-size:13px;">
+        <span style="color:#aab2aa;">รวมบิล: <b style="color:#d4af37;" id="invTotal">0</b> บาท</span>
+        <span style="color:#7ee2a0;">✅ จ่ายแล้ว: <b id="invPaidAmt">0</b> บาท</span>
+        <span style="color:#ffb37a;">⏳ รอตรวจ: <b id="invWaitAmt">0</b> บาท</span>
+        <span style="color:#ff8f8f;">⛔ ค้าง: <b id="invDueAmt">0</b> บาท</span>
+      </div>
       <div style="overflow-x:auto;"><table>
         <thead><tr><th>ห้อง</th><th>ผู้เช่า</th><th>น้ำ</th><th>ไฟ</th><th>ค่าเช่า</th><th>รวม</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
         <tbody id="invRows"></tbody>
