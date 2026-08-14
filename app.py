@@ -1068,11 +1068,12 @@ def bill_pay(bill_token):
 
     # ===== โหมดอัตโนมัติ: ซื้อ add-on + ตั้งสาขาแล้ว =====
     can_auto = (dorm.get("slipok_branch_id")
+                and dorm.get("slipok_api_key")
                 and dorm.get("addon_autocheck_active")
                 and dorm.get("addon_autocheck_credits", 0) > 0)
     if can_auto:
         url = f"https://api.slipok.com/api/line/apikey/{dorm.get('slipok_branch_id')}"
-        headers = {"x-authorization": PLATFORM_SLIPOK_KEY}
+        headers = {"x-authorization": dorm.get("slipok_api_key")}
         files = {"files": (file.filename or "slip.jpg", file.stream, file.mimetype or "image/jpeg")}
         try:
             resp = requests.post(url, headers=headers, files=files, data={"log": True}, timeout=15)
