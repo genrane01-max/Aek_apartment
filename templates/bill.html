@@ -80,6 +80,9 @@
       <div class="item"><span>ค่าเช่า</span><span>{{ "%.2f"|format(invoice.rent_amount) }} ฿</span></div>
       <div class="item"><span>ค่าขยะ</span><span>{{ "%.2f"|format(invoice.garbage_fee) }} ฿</span></div>
       <div class="item"><span>ค่าส่วนกลาง</span><span>{{ "%.2f"|format(invoice.service_fee) }} ฿</span></div>
+      {% for f in invoice.extra_fees or [] %}
+      <div class="item"><span>{{ f.label }}</span><span>{{ "%.2f"|format(f.amount) }} ฿</span></div>
+      {% endfor %}
     </div>
 
     <div class="total"><span>ยอดรวมทั้งสิ้น</span><span>{{ "%.2f"|format(invoice.total_amount) }} ฿</span></div>
