@@ -483,10 +483,10 @@ def dorm_login():
         return jsonify({"success": False, "message": "username หรือรหัสผ่านไม่ถูกต้อง"}), 401
     if not dorm.get("is_active", True):
         return jsonify({"success": False, "message": "หอพักนี้ถูกระงับ กรุณาติดต่อผู้ให้บริการ"}), 403
-    if is_dorm_expired(dorm):
-        return jsonify({"success": False, "message": "แพ็กเกจหมดอายุ กรุณาต่ออายุ"}), 403
     session["dorm_id"] = doc.id
     session.permanent = True
+    if is_dorm_expired(dorm):
+        return jsonify({"success": True, "message": "เข้าสู่ระบบสำเร็จ", "locked": True})
     return jsonify({"success": True, "message": "เข้าสู่ระบบสำเร็จ"})
 
 @app.route("/api/dorm/register", methods=["POST"])
