@@ -508,7 +508,8 @@ async function addRoom(){
       elec_meter:document.getElementById('rmElec').value,
       deposit_amount:document.getElementById('rmDeposit').value,
       garbage_fee:document.getElementById('rmGarbage').value,
-      service_fee:document.getElementById('rmService').value})});
+      service_fee:document.getElementById('rmService').value,
+      extra_fees:collectFees('feeList')})});
   const d=await r.json(); showMsg('msgRoom', d.success?'✅ '+d.message:'❌ '+(d.message||'error'), d.success);
   if(d.success){ ['rmNo','rmName','rmPhone','rmLine','rmRent','rmWater','rmElec','rmDeposit','rmGarbage','rmService'].forEach(i=>document.getElementById(i).value=''); loadRooms(); }
 }
