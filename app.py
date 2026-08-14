@@ -1,7 +1,8 @@
 # ============================================================
 # DORM BILLING — ระบบบิลหอพักอัตโนมัติ (Multi-Tenant SaaS)
 # Flask + Firebase/Firestore + SlipOK + Render
-# FINAL v7: Security Pack ครบ (Rate Limit, CSV, Headers, Session)
+# FINAL v8: Security Pack ครบ (Rate Limit+Redis, Constant-time compare,
+#           Webhook signature enforced, Secret masking, Safer SlipOK calls)
 # ============================================================
 import os
 import secrets
@@ -45,7 +46,18 @@ app.config.update(
 )
 
 # ---- Rate Limiter ----
-limiter = Limiter(get_remote_address, app=app, default_limits=["200 per minute"])
+# 🔒 FIX: storage_uri now configurable. On Render with multiple
+# workers/instances, in-memory storage counts requests separately per
+# process, so the "5 per minute" limits below can effectively be bypassed.
+# Set RATELIMIT_STORAGE_URI (e.g. redis://<host>:<port>) in Render env vars
+# to make limits shared across all instances. If unset, behaves exactly as
+# before (in-memory, per-process) so this change alone doesn't break anything.
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per minute"],
+    storage_uri=os.environ.get("RATELIMIT_STORAGE_URI", "memory://"),
+)
 
 # ---- ค่าบริการ (Env จาก Render) ----
 SUPERADMIN_PASSWORD = os.environ.get("SUPERADMIN_PASSWORD", "")
@@ -164,8 +176,13 @@ def verify_platform_slip(file, expected_amount):
     url = f"https://api.slipok.com/api/line/apikey/{PLATFORM_SLIPOK_BRANCH}"
     headers = {"x-authorization": PLATFORM_SLIPOK_KEY}
     files = {"files": (file.filename or "slip.jpg", file.stream, file.mimetype or "image/jpeg")}
-    resp = requests.post(url, headers=headers, files=files, data={"log": True}, timeout=15)
-    res = resp.json()
+    # 🔒 FIX: wrap the network call + JSON parse in try/except so a SlipOK
+    # timeout / bad response returns a clean JSON error instead of a raw 500.
+    try:
+        resp = requests.post(url, headers=headers, files=files, data={"log": True}, timeout=15)
+        res = resp.json()
+    except Exception:
+        return {"success": False, "message": "ตรวจสลิปผิดพลาด กรุณาลองใหม่"}
     print(f"--- PLATFORM SLIPOK: {res} ---")
     if not res.get("success"):
         return {"success": False, "message": res.get("message", "สลิปไม่ถูกต้อง")}
@@ -294,7 +311,8 @@ def superadmin_login():
     data = request.get_json(silent=True) or {}
     if not SUPERADMIN_PASSWORD:
         return jsonify({"success": False, "message": "ยังไม่ได้ตั้งค่ารหัสผ่าน Super Admin ใน Render Secrets"}), 500
-    if data.get("password") == SUPERADMIN_PASSWORD:
+    # 🔒 FIX: constant-time comparison instead of ==
+    if hmac.compare_digest(str(data.get("password") or ""), SUPERADMIN_PASSWORD):
         session["is_superadmin"] = True
         session.permanent = True
         return jsonify({"success": True})
@@ -439,7 +457,13 @@ def dorm_login():
     doc = docs[0]
     dorm = doc.to_dict()
     stored = dorm.get("password_hash", "")
-    valid = check_password_hash(stored, password) if stored.startswith(("scrypt:", "pbkdf2:")) else (stored == password)
+    # 🔒 FIX: constant-time comparison for legacy plaintext passwords
+    # (old accounts created before hashing was added). Hashed accounts
+    # already go through check_password_hash, which is constant-time.
+    if stored.startswith(("scrypt:", "pbkdf2:")):
+        valid = check_password_hash(stored, password)
+    else:
+        valid = hmac.compare_digest(stored.encode(), password.encode())
     if not valid:
         return jsonify({"success": False, "message": "username หรือรหัสผ่านไม่ถูกต้อง"}), 401
     if not dorm.get("is_active", True):
@@ -972,8 +996,10 @@ def dorm_webhook_info():
         token = secrets.token_urlsafe(24)
         dorm_ref(dorm_id).update({"line_webhook_token": token})
     webhook_url = request.url_root.rstrip("/") + "/api/line/webhook/" + token
+    # 🔒 FIX: no longer return the raw Channel Secret to the browser —
+    # only whether it's set, same pattern as line_access_token_set below.
     return jsonify({"success": True, "webhook_url": webhook_url,
-                    "line_channel_secret": dorm.get("line_channel_secret", ""),
+                    "line_channel_secret_set": bool(dorm.get("line_channel_secret")),
                     "owner_line_user_id": dorm.get("owner_line_user_id", ""),
                     "line_access_token_set": bool(dorm.get("line_access_token"))})
 
@@ -1004,10 +1030,15 @@ def line_webhook(token):
     dorm = dorm_doc.to_dict()
     body = request.get_data()
     secret = dorm.get("line_channel_secret", "")
-    if secret:
-        sig = base64.b64encode(hmac.new(secret.encode(), body, hashlib.sha256).digest()).decode()
-        if not hmac.compare_digest(sig, request.headers.get("x-line-signature", "")):
-            return "Invalid signature", 403
+    # 🔒 FIX: previously, if a dorm hadn't set a Channel Secret yet, the
+    # signature check was skipped entirely — meaning anyone who guessed
+    # or leaked the webhook token could POST fake events. Now we reject
+    # instead of skipping.
+    if not secret:
+        return "Webhook not configured", 403
+    sig = base64.b64encode(hmac.new(secret.encode(), body, hashlib.sha256).digest()).decode()
+    if not hmac.compare_digest(sig, request.headers.get("x-line-signature", "")):
+        return "Invalid signature", 403
     payload = request.json or {}
     access_token = dorm.get("line_access_token", "")
     for ev in payload.get("events", []):
