@@ -1,0 +1,8 @@
+flask
+gunicorn
+requests
+firebase-admin
+werkzeug
+qrcode
+Pillow
+flask-limiter
