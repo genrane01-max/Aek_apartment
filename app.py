@@ -152,6 +152,21 @@ def _fmt_amount(a):
     a = round(float(a), 2)
     return str(int(a)) if a == int(a) else f"{a:.2f}".rstrip("0").rstrip(".")
 
+def parse_extra_fees(raw):
+    """รับรายการค่าใช้จ่ายอื่น [{'label':..., 'amount':...}] -> list ที่ผ่านการตรวจแล้ว"""
+    result = []
+    for item in (raw or []):
+        if not isinstance(item, dict):
+            continue
+        label = (item.get("label") or "").strip()
+        try:
+            amount = float(item.get("amount") or 0)
+        except (TypeError, ValueError):
+            amount = 0
+        if label and amount > 0:
+            result.append({"label": label, "amount": round(amount, 2)})
+    return result
+
 def sanitize_csv(val):
     """กัน CSV Injection: เติม ' นำหน้าเครื่องหมายอันตราย (= + - @)"""
     val = str(val)
