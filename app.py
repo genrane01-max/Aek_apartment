@@ -730,7 +730,9 @@ def dorm_generate_invoices():
         rent = float(room.get("rent_amount") or 0)
         garbage_fee = float(room.get("garbage_fee") or 0)
         service_fee = float(room.get("service_fee") or 0)
-        total = round(water_cost + elec_cost + rent + garbage_fee + service_fee, 2)
+        extra_fees = room.get("extra_fees") or []
+        extra_total = round(sum(float(f.get("amount") or 0) for f in extra_fees), 2)
+        total = round(water_cost + elec_cost + rent + garbage_fee + service_fee + extra_total, 2)
         dorm_ref(dorm_id).collection("rooms").document(doc.id).update(
             {"water_meter": new_water, "elec_meter": new_elec})
         dorm_ref(dorm_id).collection("invoices").document(inv_id).set({
