@@ -877,6 +877,24 @@ def dorm_invoice_slip(invoice_id):
         return "สลิปเสียหาย", 400
     return send_file(io.BytesIO(raw), mimetype="image/jpeg")
 
+@app.route("/api/dorm/invoices/<invoice_id>/mark_paid", methods=["POST"])
+def dorm_mark_paid_invoice(invoice_id):
+    dorm_id, _ = get_current_dorm()
+    if not dorm_id:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    doc = dorm_ref(dorm_id).collection("invoices").document(invoice_id).get()
+    if not doc.exists:
+        return jsonify({"success": False, "message": "ไม่พบบิล"}), 404
+    cur = doc.to_dict()
+    if cur.get("status") != "pending":
+        return jsonify({"success": False, "message": "ทำได้เฉพาะบิลที่ยังรอจ่าย"}), 400
+    dorm_ref(dorm_id).collection("invoices").document(invoice_id).update({
+        "status": "paid",
+        "paid_at": firestore.SERVER_TIMESTAMP,
+        "payment_method": "cash",
+    })
+    return jsonify({"success": True, "message": "บันทึกจ่ายแล้ว (เงินสด/จ่ายตรง) เรียบร้อย"})
+
 @app.route("/api/dorm/invoices/<invoice_id>/approve", methods=["POST"])
 def dorm_approve_invoice(invoice_id):
     dorm_id, _ = get_current_dorm()
