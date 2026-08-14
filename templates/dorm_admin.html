@@ -700,7 +700,8 @@ async function submitEdit(){
         elec_usage:document.getElementById('editElec').value,
         rent_amount:document.getElementById('editRent').value,
         garbage_fee:document.getElementById('editGarbage').value,
-        service_fee:document.getElementById('editService').value})});
+        service_fee:document.getElementById('editService').value,
+        extra_fees:collectFees('editFeeList')})});
     const d=await r.json();
     msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
     if(d.success){ setTimeout(()=>{ closeModal('editModal'); loadInvoices(); },1200); }
