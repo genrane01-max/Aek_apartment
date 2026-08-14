@@ -614,6 +614,7 @@ def dorm_rooms():
         for r in dorm_ref(dorm_id).collection("rooms").stream():
             if r.to_dict().get("room_no") == room_no:
                 return jsonify({"success": False, "message": "เลขห้องนี้มีอยู่แล้ว"}), 400
+        extra_fees = parse_extra_fees(data.get("extra_fees"))
         room_ref = dorm_ref(dorm_id).collection("rooms").document()
         room_ref.set({
             "room_no": room_no, "tenant_name": tenant_name, "phone": phone,
@@ -621,6 +622,7 @@ def dorm_rooms():
             "water_meter": water_meter, "elec_meter": elec_meter,
             "deposit_amount": deposit_amount, "deposit_status": "none",
             "garbage_fee": garbage_fee, "service_fee": service_fee,
+            "extra_fees": extra_fees,
             "active": True, "created_at": firestore.SERVER_TIMESTAMP
         })
         return jsonify({"success": True, "message": f"เพิ่มห้อง {room_no} เรียบร้อย", "room_id": room_ref.id})
