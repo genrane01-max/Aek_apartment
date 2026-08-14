@@ -105,7 +105,7 @@ def is_dorm_expired(dorm):
 def mask_key(key):
     return ("****" + key[-4:]) if key else ""
 
-def get_current_dorm():
+def get_current_dorm(allow_expired=False):
     dorm_id = session.get("dorm_id")
     if not dorm_id:
         return None, None
@@ -114,7 +114,9 @@ def get_current_dorm():
         session.pop("dorm_id", None)
         return None, None
     dorm = doc.to_dict()
-    if not dorm.get("is_active", True) or is_dorm_expired(dorm):
+    if not dorm.get("is_active", True):
+        return None, None
+    if is_dorm_expired(dorm) and not allow_expired:
         return None, None
     return dorm_id, dorm
 
