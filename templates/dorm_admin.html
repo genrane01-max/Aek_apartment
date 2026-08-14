@@ -718,8 +718,13 @@ async function loadWh(){
     const r=await fetch('/api/dorm/webhook_info'); const d=await r.json();
     if(!d.success) return;
     document.getElementById('whUrl').value=d.webhook_url;
+    // 🔒 FIX: both Access Token and Channel Secret are now shown as a
+    // "(ตั้งค่าแล้ว)" placeholder instead of the real value, since the
+    // backend no longer sends the real secret back. saveWh() below knows
+    // to skip sending the placeholder back so it never overwrites the
+    // real stored value with the placeholder text.
     document.getElementById('whToken').value=d.line_access_token_set?'(ตั้งค่าแล้ว)':'';
-    document.getElementById('whSecret').value=d.line_channel_secret;
+    document.getElementById('whSecret').value=d.line_channel_secret_set?'(ตั้งค่าแล้ว)':'';
     document.getElementById('whStatus').innerHTML=d.owner_line_user_id
       ? '✅ เชื่อมต่อแล้ว — Owner LINE ID: <b style="color:#d4af37;">'+esc(d.owner_line_user_id)+'</b>'
       : '⏳ ยังไม่เชื่อมต่อ — แอดไลน์บอท + ส่งข้อความ แล้วจะขึ้นที่นี่อัตโนมัติ';
@@ -729,9 +734,11 @@ function copyWh(){ navigator.clipboard.writeText(document.getElementById('whUrl'
 async function saveWh(){
   let t = document.getElementById('whToken').value;
   if (t === '(ตั้งค่าแล้ว)') t = '';   // ไม่ส่ง placeholder กลับไปเขียนทับ token จริง
+  let s = document.getElementById('whSecret').value;
+  if (s === '(ตั้งค่าแล้ว)') s = '';   // ไม่ส่ง placeholder กลับไปเขียนทับ secret จริง
   const r=await fetch('/api/dorm/webhook_config',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({line_access_token: t,
-      line_channel_secret:document.getElementById('whSecret').value})});
+      line_channel_secret: s})});
   const d=await r.json(); showMsg('whMsg', d.success?'✅ '+d.message:'❌ '+(d.message||'error'), d.success); loadWh();
 }
 
