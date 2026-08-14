@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบบิลหอพักอัตโนมัติ</title>
+<meta name="theme-color" content="#0b0f0d">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+    font-family:'Sarabun','Segoe UI',sans-serif; color:#ece9e2;
+    background: radial-gradient(circle at 15% 8%, rgba(212,175,55,.14) 0%, transparent 45%),
+                radial-gradient(circle at 85% 92%, rgba(212,175,55,.10) 0%, transparent 40%),
+                linear-gradient(160deg,#0b0d0b 0%, #11140f 55%, #080a08 100%);
+  }
+  .card {
+    width:100%; max-width:430px; background:rgba(15,18,14,.82);
+    border:1px solid rgba(212,175,55,.28); border-radius:20px; padding:38px 32px;
+    box-shadow:0 30px 80px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.04);
+    position:relative; backdrop-filter:blur(8px);
+  }
+  .card::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:70px; height:2px; background:linear-gradient(90deg,transparent,#d4af37,transparent); }
+  .brand { text-align:center; margin-bottom:30px; }
+  .brand .monogram { width:58px; height:58px; margin:0 auto 14px; border-radius:16px;
+    border:1.5px solid rgba(212,175,55,.6); display:flex; align-items:center; justify-content:center;
+    font-family:'Playfair Display',serif; font-size:26px; color:#d4af37;
+    background:linear-gradient(160deg,rgba(212,175,55,.14),rgba(212,175,55,.02));
+    box-shadow:0 8px 24px rgba(212,175,55,.15); }
+  .brand h1 { font-family:'Playfair Display','Sarabun',serif; font-size:26px; font-weight:800;
+    letter-spacing:.5px; color:#f3efe6; }
+  .brand h1 em { font-style:normal; background:linear-gradient(135deg,#f5d97a,#c9a227);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .brand .sub { color:#9a9078; font-size:11px; letter-spacing:4px; text-transform:uppercase; margin-top:6px; }
+  .gold-line { height:1px; width:56px; margin:16px auto 0; background:linear-gradient(90deg,transparent,#d4af37,transparent); }
+  .tabs { display:flex; gap:22px; justify-content:center; margin-bottom:26px; border-bottom:1px solid #23271f; }
+  .tab { padding:10px 4px; color:#8d8571; font-size:14px; font-weight:600; cursor:pointer;
+    border-bottom:2px solid transparent; transition:.2s; letter-spacing:.3px; }
+  .tab.active { color:#d4af37; border-bottom-color:#d4af37; }
+  .form { display:none; animation:fade .3s ease; }
+  .form.show { display:block; }
+  @keyframes fade { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  label { display:block; color:#8d8571; font-size:11.5px; letter-spacing:.8px; margin:16px 0 6px; text-transform:uppercase; }
+  input {
+    width:100%; padding:11px 2px; border:none; border-bottom:1px solid #2b2f26;
+    background:transparent; color:#f0ede5; font-size:15px; outline:none; transition:.2s; font-family:inherit;
+  }
+  input:focus { border-bottom-color:#d4af37; }
+  input::placeholder { color:#5c574a; }
+  .row { display:flex; gap:18px; }
+  .row > div { flex:1; }
+  .btn {
+    width:100%; margin-top:30px; padding:14px; border:none; border-radius:12px; cursor:pointer;
+    font-family:inherit; font-size:15px; font-weight:700; letter-spacing:1px; color:#131005;
+    background:linear-gradient(135deg,#f5d97a,#c9a227 55%,#a8852a);
+    box-shadow:0 10px 26px rgba(212,175,55,.28); transition:.2s;
+  }
+  .btn:hover { transform:translateY(-1px); box-shadow:0 14px 32px rgba(212,175,55,.4); }
+  .btn:disabled { opacity:.5; transform:none; }
+  .msg { margin-top:16px; padding:10px 12px; border-radius:10px; font-size:13px; display:none; }
+  .msg.ok { display:block; background:rgba(46,160,67,.12); color:#8fe0a8; border:1px solid rgba(46,160,67,.3); }
+  .msg.err { display:block; background:rgba(225,45,45,.12); color:#ff9b9b; border:1px solid rgba(225,45,45,.3); }
+  .hint { margin-top:18px; text-align:center; color:#6d6756; font-size:12px; }
+  .trial-badge {
+    display:inline-block; padding:6px 14px; border-radius:30px; font-size:11px; letter-spacing:.5px;
+    color:#d4af37; border:1px solid rgba(212,175,55,.4); background:rgba(212,175,55,.08);
+  }
+  .foot-links { text-align:center; margin-top:22px; }
+  .foot-links a { color:#d4af37; font-size:13px; text-decoration:none; letter-spacing:.3px; }
+  .credit { text-align:center; color:#57523f; font-size:11px; margin-top:14px; }
+  .credit a { color:#9a9078; text-decoration:none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="monogram">B</div>
+      <h1>บิล<em>หอพัก</em></h1>
+      <div class="sub">Dorm Billing · Premium</div>
+      <div class="gold-line"></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabLogin" onclick="switchTab('login')">เข้าสู่ระบบ</div>
+      <div class="tab" id="tabReg" onclick="switchTab('reg')">สมัครใช้งาน</div>
+    </div>
+
+    <!-- ===== เข้าสู่ระบบ ===== -->
+    <div class="form show" id="formLogin">
+      <label>Username</label>
+      <input id="loginUser" placeholder="ชื่อผู้ใช้ของคุณ" autocomplete="username">
+      <label>รหัสผ่าน</label>
+      <input id="loginPass" type="password" placeholder="รหัสผ่าน" autocomplete="current-password">
+      <button class="btn" id="btnLogin" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <div class="msg" id="msgLogin"></div>
+      <div class="hint">ลืมรหัสผ่าน? ติดต่อผู้ให้บริการเพื่อรีเซ็ต</div>
+    </div>
+
+    <!-- ===== สมัคร ===== -->
+    <div class="form" id="formReg">
+      <div style="text-align:center; margin-bottom:4px;"><span class="trial-badge">✦ ทดลองใช้ฟรี 30 วัน</span></div>
+      <label>Username</label>
+      <input id="regUser" placeholder="อย่างน้อย 3 ตัวอักษร">
+      <label>รหัสผ่าน</label>
+      <input id="regPass" type="password" placeholder="อย่างน้อย 4 ตัวอักษร">
+      <label>ชื่อหอพัก</label>
+      <input id="regName" placeholder="เช่น หอพักศรีสุข">
+      <label>เลขพร้อมเพย์ (รับเงินค่าเช่า)</label>
+      <input id="regPromptpay" placeholder="เช่น 0812345678">
+      <div class="row">
+        <div><label>เรทน้ำ (฿/หน่วย)</label><input id="regWater" type="number" step="0.01" placeholder="20"></div>
+        <div><label>เรทไฟ (฿/หน่วย)</label><input id="regElec" type="number" step="0.01" placeholder="8"></div>
+      </div>
+      <button class="btn" id="btnReg" onclick="doRegister()">สมัครและเริ่มใช้ฟรี</button>
+      <div class="msg" id="msgReg"></div>
+      <div class="hint">ครบกำหนดจ่ายเพียง 399฿/เดือน</div>
+    </div>
+
+    <div class="foot-links"><a href="/manual">📖 คู่มือการใช้งาน (มือใหม่อ่านก่อน)</a></div>
+    <div class="credit">พัฒนาระบบโดยใช้ <a href="https://freebuff.com" target="_blank">Freebuff AI</a> ⚡</div>
+  </div>
+
+<script>
+  function switchTab(name){
+    document.getElementById('tabLogin').classList.toggle('active', name==='login');
+    document.getElementById('tabReg').classList.toggle('active', name==='reg');
+    document.getElementById('formLogin').classList.toggle('show', name==='login');
+    document.getElementById('formReg').classList.toggle('show', name==='reg');
+  }
+  function showMsg(id, ok, text){
+    const el=document.getElementById(id); el.className='msg '+(ok?'ok':'err'); el.textContent=text;
+  }
+  async function doLogin(){
+    const btn=document.getElementById('btnLogin'); btn.disabled=true;
+    try{
+      const r=await fetch('/api/dorm/login',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:document.getElementById('loginUser').value.trim(),
+          password:document.getElementById('loginPass').value})});
+      const d=await r.json();
+      if(d.success){ showMsg('msgLogin',true,'✅ '+d.message); setTimeout(()=>location.href='/dorm/admin',600); }
+      else showMsg('msgLogin',false,'❌ '+(d.message||'เกิดข้อผิดพลาด'));
+    }catch(e){ showMsg('msgLogin',false,'❌ เกิดข้อผิดพลาด: '+e.message); }
+    btn.disabled=false;
+  }
+  async function doRegister(){
+    const btn=document.getElementById('btnReg'); btn.disabled=true;
+    try{
+      const r=await fetch('/api/dorm/register',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:document.getElementById('regUser').value.trim(),
+          password:document.getElementById('regPass').value,
+          name:document.getElementById('regName').value.trim(),
+          promptpay_number:document.getElementById('regPromptpay').value.trim(),
+          water_rate:document.getElementById('regWater').value,
+          elec_rate:document.getElementById('regElec').value})});
+      const d=await r.json();
+      if(d.success){ showMsg('msgReg',true,'✅ '+d.message); setTimeout(()=>location.href='/dorm/admin',800); }
+      else showMsg('msgReg',false,'❌ '+(d.message||'เกิดข้อผิดพลาด'));
+    }catch(e){ showMsg('msgReg',false,'❌ เกิดข้อผิดพลาด: '+e.message); }
+    btn.disabled=false;
+  }
+  document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('regElec').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+</script>
+</body>
+</html>
