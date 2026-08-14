@@ -547,7 +547,8 @@ async function submitEditRoom(){
         deposit_amount:document.getElementById('erDeposit').value,
         deposit_status:document.getElementById('erDepStatus').value,
         garbage_fee:document.getElementById('erGarbage').value,
-        service_fee:document.getElementById('erService').value})});
+        service_fee:document.getElementById('erService').value,
+        extra_fees:collectFees('erFeeList')})});
     const d=await r.json();
     msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
     if(d.success){ setTimeout(()=>{ closeModal('editRoomModal'); loadRooms(); },1200); }
