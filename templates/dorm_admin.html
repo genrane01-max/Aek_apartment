@@ -511,7 +511,7 @@ async function addRoom(){
       service_fee:document.getElementById('rmService').value,
       extra_fees:collectFees('feeList')})});
   const d=await r.json(); showMsg('msgRoom', d.success?'✅ '+d.message:'❌ '+(d.message||'error'), d.success);
-  if(d.success){ ['rmNo','rmName','rmPhone','rmLine','rmRent','rmWater','rmElec','rmDeposit','rmGarbage','rmService'].forEach(i=>document.getElementById(i).value=''); loadRooms(); }
+  if(d.success){ ['rmNo','rmName','rmPhone','rmLine','rmRent','rmWater','rmElec','rmDeposit','rmGarbage','rmService'].forEach(i=>document.getElementById(i).value=''); document.getElementById('feeList').innerHTML=''; loadRooms(); }
 }
 function delRoom(id,no){
   askConfirm('🗑️ ลบห้อง','ลบห้อง '+no+' ออกจากระบบ? ข้อมูลผู้เช่าจะหาย', async()=>{
