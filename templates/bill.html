@@ -78,6 +78,8 @@
       <div class="item"><span>ค่าน้ำ {{ invoice.water_usage }} หน่วย × {{ dorm.water_rate }}฿</span><span>{{ "%.2f"|format(invoice.water_cost) }} ฿</span></div>
       <div class="item"><span>ค่าไฟ {{ invoice.elec_usage }} หน่วย × {{ dorm.elec_rate }}฿</span><span>{{ "%.2f"|format(invoice.elec_cost) }} ฿</span></div>
       <div class="item"><span>ค่าเช่า</span><span>{{ "%.2f"|format(invoice.rent_amount) }} ฿</span></div>
+      <div class="item"><span>ค่าขยะ</span><span>{{ "%.2f"|format(invoice.garbage_fee) }} ฿</span></div>
+      <div class="item"><span>ค่าส่วนกลาง</span><span>{{ "%.2f"|format(invoice.service_fee) }} ฿</span></div>
     </div>
 
     <div class="total"><span>ยอดรวมทั้งสิ้น</span><span>{{ "%.2f"|format(invoice.total_amount) }} ฿</span></div>
