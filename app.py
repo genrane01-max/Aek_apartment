@@ -836,6 +836,23 @@ def dorm_invoice_billcard(invoice_id):
     link_qr = generate_qr_datauri(request.url_root.rstrip('/') + "/bill/" + inv.get("bill_token", ""))
     return render_template("billcard.html", invoice=inv, dorm=dorm, pay_qr=pay_qr, link_qr=link_qr)
 
+@app.route("/api/dorm/invoices/<invoice_id>/slip")
+def dorm_invoice_slip(invoice_id):
+    dorm_id, _ = get_current_dorm()
+    if not dorm_id:
+        return "Unauthorized", 401
+    doc = dorm_ref(dorm_id).collection("invoices").document(invoice_id).get()
+    if not doc.exists:
+        return "ไม่พบบิล", 404
+    b64 = doc.to_dict().get("slip_image", "")
+    if not b64:
+        return "ยังไม่มีสลิป", 404
+    try:
+        raw = base64.b64decode(b64)
+    except Exception:
+        return "สลิปเสียหาย", 400
+    return send_file(io.BytesIO(raw), mimetype="image/jpeg")
+
 @app.route("/api/dorm/invoices/<invoice_id>/approve", methods=["POST"])
 def dorm_approve_invoice(invoice_id):
     dorm_id, _ = get_current_dorm()
