@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📖 คู่มือการใช้งาน | ระบบบิลหอพัก</title>
+<meta name="theme-color" content="#0b0f0d">
+<link rel="icon" type="image/png" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,sans-serif; }
+  body { background:#0b0f0d; color:#e8ece8; min-height:100vh; }
+  .wrap { max-width:720px; margin:0 auto; padding:20px 16px 60px; }
+  .hero { text-align:center; padding:26px 16px; background:linear-gradient(135deg,#141a16,#1a2218);
+    border:1px solid rgba(212,175,55,.3); border-radius:16px; margin-bottom:20px; }
+  .hero h1 { color:#d4af37; font-size:22px; }
+  .hero p { color:#aab2aa; font-size:13px; margin-top:6px; }
+  .card { background:#141a16; border:1px solid #222b23; border-radius:14px; padding:20px; margin-bottom:16px; }
+  .card h2 { color:#d4af37; font-size:16px; margin-bottom:12px; }
+  .card h3 { color:#e8ece8; font-size:14px; margin:14px 0 6px; }
+  .card p, .card li { color:#cfd6cf; font-size:13px; line-height:1.7; }
+  .card ol, .card ul { padding-left:20px; }
+  .box { background:#0f1411; border:1px solid #2a332c; border-radius:10px; padding:12px 14px; margin:10px 0; font-size:13px; color:#cfd6cf; }
+  .gold { color:#d4af37; font-weight:700; }
+  .green { color:#7ee2a0; font-weight:700; }
+  .red { color:#ff8f8f; font-weight:700; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
+  th { text-align:left; color:#d4af37; padding:8px; border-bottom:1px solid #2a332c; }
+  td { padding:8px; border-bottom:1px solid #1c241e; color:#cfd6cf; vertical-align:top; }
+  .back { display:inline-block; margin-top:8px; color:#d4af37; text-decoration:none; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>📖 คู่มือการใช้งานระบบบิลหอพัก</h1>
+    <p>อ่านจบ 5 นาที ใช้เป็นเลย — สำหรับเจ้าของหอที่ยังไม่เคยใช้</p>
+    <a class="back" href="javascript:history.back()">← กลับไปหน้าที่แล้ว</a>
+  </div>
+
+  <!-- 1. สมัคร -->
+  <div class="card">
+    <h2>🚀 1. สมัครใช้งาน (ฟรี 30 วันแรก)</h2>
+    <ol>
+      <li>เปิดหน้า <span class="gold">/dorm/login</span> → กดปุ่ม <span class="gold">สมัครใช้งาน</span></li>
+      <li>กรอกข้อมูล: <b>Username</b>, <b>รหัสผ่าน</b>, <b>ชื่อหอพัก</b>, <b>เบอร์พร้อมเพย์</b> (เบอร์ที่รับเงินค่าเช่า), <b>เรทน้ำ/ไฟ</b></li>
+      <li>กดสมัคร → เข้าใช้ได้ทันที <span class="green">ฟรี 30 วัน</span></li>
+    </ol>
+    <div class="box">⏰ ครบ 30 วัน → ระบบล็อกอัตโนมัติ → กด <b>ต่ออายุ</b> → สแกน QR <span class="gold">399฿/เดือน</span> → จ่าย + อัปสลิป → ระบบตรวจผ่าน → ใช้งานต่อทันที</div>
+  </div>
+
+  <!-- 2. เตรียมของ -->
+  <div class="card">
+    <h2>🧾 2. ต้องเตรียมอะไรบ้าง / ไปเอาจากไหน</h2>
+    <table>
+      <tr><th>ของที่ต้องมี</th><th>เอามาจากไหน</th><th>จำเป็นไหม</th></tr>
+      <tr><td><b>เบอร์พร้อมเพย์</b> (รับเงินค่าเช่า)</td><td>เบอร์โทร/เลขบัตรที่ผูกพร้อมเพย์ไว้แล้ว — ตั้งในแอปธนาคารของคุณ</td><td><span class="red">จำเป็น</span></td></tr>
+      <tr><td><b>รหัสสาขา SlipOK</b></td><td>ผู้ให้บริการ (Super Admin) เป็นคนสร้างสาขา + ตั้งให้ — <b>คุณไม่ต้องทำ</b></td><td>เฉพาะแบบตรวจอัตโนมัติ</td></tr>
+      <tr><td><b>LINE OA</b> (ส่งบิลแจ้งเตือน)</td><td>สมัคร LINE Official Account ที่ line.me/business (ฟรี) + LINE Developers เอา Access Token</td><td>ไม่บังคับ (ข้ามไปได้)</td></tr>
+    </table>
+  </div>
+
+  <!-- 3. ระบบทำงาน -->
+  <div class="card">
+    <h2>⚙️ 3. ระบบทำงานยังไง (คร่าวๆ)</h2>
+    <div class="box">1️⃣ เพิ่มห้อง: เลขห้อง + ชื่อผู้เช่า + ค่าเช่า + เลขมิเตอร์เริ่มต้น<br>
+    2️⃣ สิ้นเดือน: กรอกเลขมิเตอร์ใหม่ → ระบบคิดค่าน้ำ/ไฟ + ค่าเช่า = ยอดบิล → สร้าง QR ให้อัตโนมัติ<br>
+    3️⃣ ส่ง QR/ลิงก์ให้ผู้เช่า (ก็อปปี้ส่ง LINE ได้เลย) → ผู้เช่าสแกนจ่าย → อัปสลิป<br>
+    4️⃣ ระบบตรวจสลิป → ผ่าน = บิลขึ้น "จ่ายแล้ว" ✅ → Export Excel สรุปสิ้นเดือน</div>
+  </div>
+
+  <!-- แบบ 1 -->
+  <div class="card">
+    <h2>👀 แบบที่ 1: เช็คสลิปแบบมือ (ฟรี ไม่ต้องซื้อเพิ่ม)</h2>
+    <h3>วิธีใช้</h3>
+    <p>ไม่ต้องตั้งค่าอะไรเลย — ผู้เช่าส่งสลิป → ระบบเก็บรูปสลิปไว้ → หน้า Admin เห็นบิลขึ้น <span class="gold">"รอตรวจ"</span> → คุณเปิดดูรูป → กด <b>อนุมัติ</b> (หรือปฏิเสธ)</p>
+    <h3>ได้อะไร</h3>
+    <p>✅ ใช้ได้ฟรีทันที / ✅ กันสลิปซ้ำ<br>⚠️ แต่คุณต้อง <b>นั่งเปิดดูสลิปเองทุกใบ</b></p>
+  </div>
+
+  <!-- แบบ 2 -->
+  <div class="card">
+    <h2>⚡ แบบที่ 2: เช็คสลิปอัตโนมัติ (Add-on 199฿/เดือน / 250 ครั้ง)</h2>
+    <h3>วิธีเปิดใช้</h3>
+    <ol>
+      <li>หน้า Admin → แท็บ <b>ตรวจสลิป</b> → กด <span class="gold">เปิดใช้งาน 199฿</span></li>
+      <li>สแกน QR → จ่าย 199 → อัปสลิป → ระบบตรวจผ่าน → <span class="green">เปิดใช้ทันที ได้ 250 ครั้ง/เดือน</span></li>
+      <li>ส่วนการตั้งสาขา <b>ผู้ให้บริการเป็นคนทำให้</b> — คุณไม่ต้องแตะอะไร</li>
+    </ol>
+    <h3>ได้อะไร (ต่างจากแบบ 1 ตรงไหน)</h3>
+    <p>ผู้เช่าส่งสลิป → ระบบ <b>ตรวจกับธนาคารอัตโนมัติ</b> → ผ่าน = บิลจ่ายทันที <b>โดยที่คุณไม่ต้องเปิดดู</b><br>
+    ✅ ตรวจเจอสลิปปลอม / สลิปซ้ำ / ยอดเงินไม่ตรงบิล / สลิปเก่าเกิน 15 นาที<br>
+    ✅ ประหยัดเวลา — ไม่ต้องนั่งดูสลิปทีละใบ</p>
+  </div>
+
+  <!-- LINE -->
+  <div class="card">
+    <h2>💬 LINE Webhook (ขั้นสูง — เจ้าของหอตั้งเองได้ ~30 นาที)</h2>
+    <ol>
+      <li>สร้าง LINE Official Account ฟรีที่ <b>line.me/business</b> (ตั้งชื่อหอคุณ)</li>
+      <li>เข้า <b>developers.line.biz</b> → สร้าง Provider → สร้าง Messaging API channel → ผูกกับ LINE OA</li>
+      <li>หน้า Admin → แท็บ <b>LINE</b> → วาง <b>Channel Access Token + Channel Secret</b> (ก็อปปี้จาก LINE Developers) → บันทึก</li>
+      <li>ก็อปปี้ <b>Webhook URL</b> → ไป LINE Developers → แท็บ Messaging API → Webhook settings → วาง URL → <b>เปิด Use webhook</b> → กด <b>Verify</b> (ต้องขึ้น Success)</li>
+      <li>แอดไลน์บอท (สแกน QR / กดลิงก์ line.me/R/ti/p/@ไอดีบอท) → ส่งข้อความอะไรก็ได้ → ระบบจำ LINE ID ให้อัตโนมัติ → เอาไปใส่ <b>Owner LINE User ID</b></li>
+      <li>ผู้เช่า: ให้ผู้เช่าแอดไลน์บอทก่อน → ระบบเก็บ ID ผู้เช่า → เอาไปใส่ช่อง "LINE User ID" ตอนเพิ่มห้อง → ระบบส่งลิงก์บิลหาผู้เช่าได้</li>
+    </ol>
+    <div class="box">💡 ข้ามขั้นตอนนี้ได้เลยถ้าไม่อยากยุ่ง — ระบบยังใช้ได้ครบ แค่ไม่มีแจ้งเตือน LINE</div>
+  </div>
+
+  <!-- สรุป -->
+  <div class="card">
+    <h2>🎯 สรุปเลือกแบบไหนดี</h2>
+    <table>
+      <tr><th></th><th>👀 แบบมือ (ฟรี)</th><th>⚡ อัตโนมัติ (199฿)</th></tr>
+      <tr><td>ผู้เช่าจ่ายได้ไหม</td><td>✅ ได้</td><td>✅ ได้</td></tr>
+      <tr><td>ใครตรวจสลิป</td><td>คุณ (กดอนุมัติเอง)</td><td>ระบบตรวจอัตโนมัติ</td></tr>
+      <tr><td>กันสลิปปลอม/ซ้ำ/เก่า</td><td>กันซ้ำได้ / ที่เหลือดูเอง</td><td>✅ ตรวจกับธนาคาร</td></tr>
+      <tr><td>เวลาเจ้าของหอ</td><td>เสียเวลาตรวจทุกใบ</td><td>แทบไม่ต้องทำอะไร</td></tr>
+      <tr><td>เหมาะกับ</td><td>หอเล็ก ห้องน้อย</td><td>หอใหญ่ ห้องเยอะ</td></tr>
+    </table>
+    <div class="box">💡 แนะนำ: ลองใช้แบบมือก่อน 30 วันฟรี พอชินแล้วค่อยเปิดอัตโนมัติ — เปิด/ปิดเมื่อไหร่ก็ได้</div>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <p style="color:#6b736b; font-size:11px;">พัฒนาระบบโดยใช้ <a href="https://freebuff.com" target="_blank" style="color:#d4af37; text-decoration:none;">Freebuff AI</a> ⚡</p>
+  </div>
+
+</div>
+</body>
+</html>
