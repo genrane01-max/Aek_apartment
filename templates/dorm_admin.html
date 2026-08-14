@@ -599,6 +599,11 @@ async function loadInvoices(){
     const d=await r.json(); if(!d.success) return;
     const invs=d.invoices||[];
     document.getElementById('invEmpty').style.display=invs.length?'none':'block';
+    const fmt=n=>Number(n||0).toLocaleString('th-TH');
+    document.getElementById('invTotal').textContent=fmt(invs.reduce((s,i)=>s+Number(i.total_amount||0),0));
+    document.getElementById('invPaidAmt').textContent=fmt(invs.filter(i=>i.status==='paid').reduce((s,i)=>s+Number(i.total_amount||0),0));
+    document.getElementById('invWaitAmt').textContent=fmt(invs.filter(i=>i.status==='waiting_confirm').reduce((s,i)=>s+Number(i.total_amount||0),0));
+    document.getElementById('invDueAmt').textContent=fmt(invs.filter(i=>i.status==='pending').reduce((s,i)=>s+Number(i.total_amount||0),0));
     document.getElementById('invRows').innerHTML=invs.map(i=>{
       const stBadge=i.status==='paid'?'<span class="badge b-paid">✅ จ่ายแล้ว</span>'
         :i.status==='waiting_confirm'?'<span class="badge b-waiting">⏳ รอตรวจ</span>'
