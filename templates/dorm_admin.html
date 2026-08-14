@@ -660,7 +660,13 @@ async function submitEdit(){
   }catch(e){ msgEl.className='msg err'; msgEl.textContent='❌ '+e.message; }
 }
 
-/* ---- ยกเลิกบิล ---- */
+function markPaid(id,no){
+  askConfirm('💰 ยืนยันรับเงิน','ยืนยันว่าได้รับเงินค่าห้อง '+no+' แล้ว (เงินสด/จ่ายตรง)?', async()=>{
+    const r=await fetch('/api/dorm/invoices/'+id+'/mark_paid',{method:'POST'}); const d=await r.json();
+    showMsg('msgInv', d.success?'✅ '+d.message:'❌ '+(d.message||'error'), d.success); loadInvoices();
+  });
+}
+
 function cancelInv(id,no){
   askConfirm('🗑️ ยกเลิกบิล','ยกเลิกบิลห้อง '+no+'? (มิเตอร์จะคืนค่าเดิม แล้วสร้างบิลใหม่ได้)', async()=>{
     try{
