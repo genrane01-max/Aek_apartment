@@ -741,6 +741,7 @@ def dorm_generate_invoices():
             "water_usage": water_usage, "elec_usage": elec_usage,
             "water_cost": water_cost, "elec_cost": elec_cost,
             "rent_amount": rent, "garbage_fee": garbage_fee, "service_fee": service_fee,
+            "extra_fees": extra_fees,
             "total_amount": total,
             "status": "pending", "bill_token": secrets.token_urlsafe(32),
             "trans_ref": "", "slip_image": "", "slip_filename": "",
@@ -773,15 +774,18 @@ def dorm_edit_invoice(invoice_id):
         service_fee = float(data.get("service_fee", cur.get("service_fee", 0)))
     except ValueError:
         return jsonify({"success": False, "message": "ตัวเลขไม่ถูกต้อง"}), 400
+    extra_fees = parse_extra_fees(data.get("extra_fees", cur.get("extra_fees")))
+    extra_total = round(sum(float(f.get("amount") or 0) for f in extra_fees), 2)
     dorm_doc = dorm_ref(dorm_id).get()
     dorm = dorm_doc.to_dict() if dorm_doc.exists else {}
     water_cost = round(max(0, water_usage) * float(dorm.get("water_rate") or 0), 2)
     elec_cost = round(max(0, elec_usage) * float(dorm.get("elec_rate") or 0), 2)
-    total = round(water_cost + elec_cost + rent + garbage_fee + service_fee, 2)
+    total = round(water_cost + elec_cost + rent + garbage_fee + service_fee + extra_total, 2)
     dorm_ref(dorm_id).collection("invoices").document(invoice_id).update({
         "water_usage": max(0, water_usage), "elec_usage": max(0, elec_usage),
         "water_cost": water_cost, "elec_cost": elec_cost,
         "rent_amount": rent, "garbage_fee": garbage_fee, "service_fee": service_fee,
+        "extra_fees": extra_fees,
         "total_amount": total
     })
     return jsonify({"success": True, "message": f"แก้ไขบิลเรียบร้อย ยอดรวมใหม่ {total:.2f} บาท"})
