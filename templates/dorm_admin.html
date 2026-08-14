@@ -389,7 +389,26 @@
 
 <script>
 const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let DORM = {}, payType='addon', roomsCache=[], metersData={}, cfAction=null, editInvId=null, editRoomId=null;
+let DORM = {}, payType='addon', roomsCache=[], invsCache=[], metersData={}, cfAction=null, editInvId=null, editRoomId=null;
+
+function addFeeRow(containerId, label, amount){
+  const c=document.getElementById(containerId);
+  const row=document.createElement('div');
+  row.style.cssText='display:flex; gap:6px; margin-bottom:6px; align-items:center;';
+  row.innerHTML=`<input placeholder="ชื่อค่าใช้จ่าย (เช่น ค่า Wi-Fi)" style="flex:2;" value="${esc(label||'')}">
+    <input type="number" step="0.01" placeholder="บาท" style="flex:1;" value="${amount==null?'':amount}">
+    <button type="button" class="mini m-red" style="margin:0;" onclick="this.parentNode.remove()">✕</button>`;
+  c.appendChild(row);
+}
+function collectFees(containerId){
+  const arr=[];
+  document.querySelectorAll('#'+containerId+' > div').forEach(d=>{
+    const inp=d.querySelectorAll('input');
+    const label=inp[0].value.trim(), amount=parseFloat(inp[1].value);
+    if(label && !isNaN(amount) && amount>0) arr.push({label:label, amount:amount});
+  });
+  return arr;
+}
 
 function showMsg(id,t,ok){ const el=document.getElementById(id); el.className='msg '+(ok?'ok':'err'); el.textContent=t; el.scrollIntoView({behavior:'smooth',block:'center'}); }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
