@@ -678,16 +678,20 @@ async function sendLine(id){ const r=await fetch(`/api/dorm/invoices/${id}/send_
 function exportCsv(){ window.location='/api/dorm/invoices/export?month='+document.getElementById('invMonth').value+'&year='+document.getElementById('invYear').value; }
 
 /* ---- แก้ไขบิล (มีค่าขยะ + ค่าส่วนกลาง) ---- */
-function openEditModal(id,w,e,rent,g,s){
+function openEditModal(id){
+  const i=invsCache.find(x=>x.id===id); if(!i) return;
   editInvId=id;
-  document.getElementById('editWater').value=w;
-  document.getElementById('editElec').value=e;
-  document.getElementById('editRent').value=rent;
-  document.getElementById('editGarbage').value=g;
-  document.getElementById('editService').value=s;
+  document.getElementById('editWater').value=i.water_usage||'';
+  document.getElementById('editElec').value=i.elec_usage||'';
+  document.getElementById('editRent').value=i.rent_amount||'';
+  document.getElementById('editGarbage').value=i.garbage_fee||'';
+  document.getElementById('editService').value=i.service_fee||'';
+  document.getElementById('editFeeList').innerHTML='';
+  (i.extra_fees||[]).forEach(f=>addFeeRow('editFeeList',f.label,f.amount));
   document.getElementById('editMsg').className='msg';
   document.getElementById('editModal').style.display='flex';
 }
+
 async function submitEdit(){
   const msgEl=document.getElementById('editMsg');
   try{
