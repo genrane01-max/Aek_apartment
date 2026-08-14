@@ -531,6 +531,8 @@ function openEditRoom(id){
   document.getElementById('erDepStatus').value=rm.deposit_status||'none';
   document.getElementById('erGarbage').value=rm.garbage_fee||'';
   document.getElementById('erService').value=rm.service_fee||'';
+  document.getElementById('erFeeList').innerHTML='';
+  (rm.extra_fees||[]).forEach(f=>addFeeRow('erFeeList',f.label,f.amount));
   document.getElementById('erMsg').className='msg';
   document.getElementById('editRoomModal').style.display='flex';
 }
