@@ -1,8 +1,10 @@
 # ============================================================
 # DORM BILLING — ระบบบิลหอพักอัตโนมัติ (Multi-Tenant SaaS)
 # Flask + Firebase/Firestore + SlipOK + Render
-# FINAL v8: Security Pack ครบ (Rate Limit+Redis, Constant-time compare,
-#           Webhook signature enforced, Secret masking, Safer SlipOK calls)
+# FINAL v9: Security Pack ครบ (Rate Limit+Redis, Constant-time compare,
+#           Webhook signature enforced, Secret masking, Safer SlipOK calls,
+#           FIX: approve/reject status-code bug, secret leak in /me and
+#           /config GET, mark_slip_used race condition)
 # ============================================================
 import os
 import secrets
@@ -46,12 +48,6 @@ app.config.update(
 )
 
 # ---- Rate Limiter ----
-# 🔒 FIX: storage_uri now configurable. On Render with multiple
-# workers/instances, in-memory storage counts requests separately per
-# process, so the "5 per minute" limits below can effectively be bypassed.
-# Set RATELIMIT_STORAGE_URI (e.g. redis://<host>:<port>) in Render env vars
-# to make limits shared across all instances. If unset, behaves exactly as
-# before (in-memory, per-process) so this change alone doesn't break anything.
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -193,8 +189,6 @@ def verify_platform_slip(file, expected_amount):
     url = f"https://api.slipok.com/api/line/apikey/{PLATFORM_SLIPOK_BRANCH}"
     headers = {"x-authorization": PLATFORM_SLIPOK_KEY}
     files = {"files": (file.filename or "slip.jpg", file.stream, file.mimetype or "image/jpeg")}
-    # 🔒 FIX: wrap the network call + JSON parse in try/except so a SlipOK
-    # timeout / bad response returns a clean JSON error instead of a raw 500.
     try:
         resp = requests.post(url, headers=headers, files=files, data={"log": True}, timeout=15)
         res = resp.json()
@@ -213,13 +207,23 @@ def verify_platform_slip(file, expected_amount):
         return {"success": False, "message": "สลิปเก่าเกินไป (ต้องโอนภายใน 15 นาทีที่ผ่านมา)"}
     return {"success": True, "trans_ref": trans_ref, "amount": amount, "data": d}
 
+# 🔒 FIX (race condition): เดิม mark_slip_used ใช้ check-then-set แบบ
+# ธรรมดา (ไม่ใช่ transaction) ถ้ามี 2 request ยิงพร้อมกันด้วยสลิปใบเดียวกัน
+# (เช่น กดปุ่มจ่ายซ้ำเร็วๆ หรือลองยิง API ซ้ำ) ทั้งคู่อาจจะเช็คผ่าน
+# "ยังไม่เคยใช้" พร้อมกันก่อนที่ฝั่งไหนจะเขียนทัน ทำให้ต่ออายุ/เปิด
+# addon ซ้ำได้จากสลิปใบเดียว จึงเปลี่ยนให้อยู่ใน Firestore transaction
+# แบบเดียวกับ execute_mark_paid_transaction ด้านล่าง
+@firestore.transactional
+def _execute_mark_slip_used_transaction(transaction, slip_ref, trans_ref, amount, note):
+    if slip_ref.get(transaction=transaction).exists:
+        return False
+    transaction.set(slip_ref, {"trans_ref": trans_ref, "amount": amount, "note": note,
+                               "used_at": firestore.SERVER_TIMESTAMP})
+    return True
+
 def mark_slip_used(trans_ref, amount, note=""):
     ref = db.collection("used_slips").document(trans_ref)
-    if ref.get().exists:
-        return False
-    ref.set({"trans_ref": trans_ref, "amount": amount, "note": note,
-             "used_at": firestore.SERVER_TIMESTAMP})
-    return True
+    return _execute_mark_slip_used_transaction(db.transaction(), ref, trans_ref, amount, note)
 
 # ============================================================
 # Transactions (กันโกง / กันสลิปซ้ำ)
@@ -328,7 +332,6 @@ def superadmin_login():
     data = request.get_json(silent=True) or {}
     if not SUPERADMIN_PASSWORD:
         return jsonify({"success": False, "message": "ยังไม่ได้ตั้งค่ารหัสผ่าน Super Admin ใน Render Secrets"}), 500
-    # 🔒 FIX: constant-time comparison instead of ==
     if hmac.compare_digest(str(data.get("password") or ""), SUPERADMIN_PASSWORD):
         session["is_superadmin"] = True
         session.permanent = True
@@ -418,7 +421,6 @@ def superadmin_delete_dorm(dorm_id):
     doc = dorm_ref(dorm_id).get()
     if not doc.exists:
         return jsonify({"success": False, "message": "ไม่พบหอพักนี้"}), 404
-    # ลบข้อมูลย่อย (ห้อง + บิล) ก่อน แล้วค่อยลบตัวหอ
     for sub in ["rooms", "invoices"]:
         for d in dorm_ref(dorm_id).collection(sub).stream():
             d.reference.delete()
@@ -474,9 +476,6 @@ def dorm_login():
     doc = docs[0]
     dorm = doc.to_dict()
     stored = dorm.get("password_hash", "")
-    # 🔒 FIX: constant-time comparison for legacy plaintext passwords
-    # (old accounts created before hashing was added). Hashed accounts
-    # already go through check_password_hash, which is constant-time.
     if stored.startswith(("scrypt:", "pbkdf2:")):
         valid = check_password_hash(stored, password)
     else:
@@ -557,6 +556,15 @@ def dorm_me():
         return jsonify({"success": False, "message": "ไม่พบหอ"}), 404
     dorm = doc.to_dict()
     dorm.pop("password_hash", None)
+    # 🔒 FIX: เดิมส่ง line_access_token, line_channel_secret, slipok_api_key,
+    # line_webhook_token แบบเต็มค่ากลับไปที่ browser ทุกครั้งที่โหลดหน้า
+    # Admin — ถ้ามีใครดู dev tools / network tab หรือมี XSS จุดใดจุดหนึ่ง
+    # จะขโมย token ไปยิง LINE API หรือปลอมลายเซ็น webhook แทนหอนั้นได้เลย
+    # เปลี่ยนให้ส่งแค่ "ตั้งค่าแล้วหรือยัง" (เหมือนที่ webhook_info ทำอยู่แล้ว)
+    dorm["line_access_token_set"] = bool(dorm.pop("line_access_token", ""))
+    dorm["line_channel_secret_set"] = bool(dorm.pop("line_channel_secret", ""))
+    dorm["slipok_api_key"] = mask_key(dorm.get("slipok_api_key", ""))
+    dorm.pop("line_webhook_token", None)
     dorm["id"] = dorm_id
     dorm["is_locked"] = (not dorm.get("is_active", True)) or is_dorm_expired(dorm)
     return jsonify({"success": True, "dorm": dorm})
@@ -585,6 +593,12 @@ def dorm_config():
     doc = dorm_ref(dorm_id).get()
     dorm = doc.to_dict() if doc.exists else {}
     dorm.pop("password_hash", None)
+    # 🔒 FIX: จุดเดียวกับ /api/dorm/me — GET เดิมคืนค่า secret เต็มๆ
+    # ทั้งที่หน้า config ใช้แค่ name/promptpay/water_rate/elec_rate/contact_info
+    dorm["line_access_token_set"] = bool(dorm.pop("line_access_token", ""))
+    dorm["line_channel_secret_set"] = bool(dorm.pop("line_channel_secret", ""))
+    dorm["slipok_api_key"] = mask_key(dorm.get("slipok_api_key", ""))
+    dorm.pop("line_webhook_token", None)
     return jsonify({"success": True, "config": dorm})
 
 @app.route("/api/dorm/rooms", methods=["GET", "POST"])
@@ -654,8 +668,12 @@ def dorm_edit_room(room_id):
         deposit_amount = float(data.get("deposit_amount") or 0)
         garbage_fee = float(data.get("garbage_fee") or 0)
         service_fee = float(data.get("service_fee") or 0)
+        water_meter = float(data.get("water_meter") or 0)
+        elec_meter = float(data.get("elec_meter") or 0)
     except ValueError:
         return jsonify({"success": False, "message": "ตัวเลขไม่ถูกต้อง"}), 400
+    if water_meter < 0 or elec_meter < 0:
+        return jsonify({"success": False, "message": "มิเตอร์ติดลบไม่ได้"}), 400
     extra_fees = parse_extra_fees(data.get("extra_fees"))
     update = {
         "tenant_name": (data.get("tenant_name") or "").strip(),
@@ -665,6 +683,8 @@ def dorm_edit_room(room_id):
         "deposit_amount": deposit_amount,
         "garbage_fee": garbage_fee,
         "service_fee": service_fee,
+        "water_meter": water_meter,
+        "elec_meter": elec_meter,
         "extra_fees": extra_fees,
     }
     ds = (data.get("deposit_status") or "").strip()
@@ -693,6 +713,57 @@ def dorm_rooms_bulk_fees():
         updated += 1
     return jsonify({"success": True, "message": f"ตั้งค่าขยะ/ค่าส่วนกลางให้ทุกห้อง ({updated} ห้อง) เรียบร้อย"})
 
+@app.route("/api/dorm/invoices/generate_daily", methods=["POST"])
+def dorm_generate_daily_invoice():
+    dorm_id, dorm = get_current_dorm()
+    if not dorm_id:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    data = request.get_json(silent=True) or {}
+    room_id = (data.get("room_id") or "").strip()
+    tenant_name = (data.get("tenant_name") or "").strip()
+    mode = data.get("mode", "nights")
+    try:
+        nights = int(data.get("nights") or 0)
+        daily_rate = float(data.get("daily_rate") or 0)
+        flat_amount = float(data.get("flat_amount") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "กรอกตัวเลขให้ถูกต้อง"}), 400
+    if mode == "nights":
+        if nights <= 0 or daily_rate <= 0:
+            return jsonify({"success": False, "message": "กรอกจำนวนคืนและราคา/คืน"}), 400
+        total = round(nights * daily_rate, 2)
+    elif mode == "flat":
+        if flat_amount <= 0:
+            return jsonify({"success": False, "message": "กรอกยอดรวม"}), 400
+        total = round(flat_amount, 2)
+        nights, daily_rate = 1, 0
+    else:
+        return jsonify({"success": False, "message": "mode ไม่ถูกต้อง"}), 400
+    room_doc = dorm_ref(dorm_id).collection("rooms").document(room_id).get()
+    if not room_doc.exists:
+        return jsonify({"success": False, "message": "ไม่พบห้อง"}), 404
+    room = room_doc.to_dict()
+    now = datetime.now()
+    inv_ref = dorm_ref(dorm_id).collection("invoices").document()
+    inv_ref.set({
+        "dorm_id": dorm_id, "month": now.month, "year": now.year + 543, "room_id": room_id,
+        "room_no": room.get("room_no"),
+        "tenant_name": tenant_name or room.get("tenant_name", ""),
+        "bill_type": "daily",
+        "daily_info": {"mode": mode, "nights": nights, "daily_rate": daily_rate},
+        "water_usage": 0, "elec_usage": 0,
+        "water_cost": 0, "elec_cost": 0,
+        "rent_amount": total, "garbage_fee": 0, "service_fee": 0,
+        "extra_fees": [],
+        "total_amount": total,
+        "status": "pending", "bill_token": secrets.token_urlsafe(32),
+        "trans_ref": "", "slip_image": "", "slip_filename": "",
+        "prev_water_meter": float(room.get("water_meter") or 0),
+        "prev_elec_meter": float(room.get("elec_meter") or 0),
+        "created_at": firestore.SERVER_TIMESTAMP, "paid_at": None
+    })
+    return jsonify({"success": True, "message": f"สร้างบิลรายวันห้อง {room.get('room_no')} ยอด {total:.2f} บาท เรียบร้อย", "invoice_id": inv_ref.id})
+
 @app.route("/api/dorm/invoices/generate", methods=["POST"])
 def dorm_generate_invoices():
     dorm_id, dorm = get_current_dorm()
@@ -716,10 +787,6 @@ def dorm_generate_invoices():
         m = meters.get(doc.id)
         if m is None:
             continue  # 👈 ห้องที่ไม่ได้เลือก (ไม่มีใน meters) = ข้าม ไม่สร้างบิล
-        inv_id = f"{dorm_id}_{room.get('room_no')}_{month}_{year}"
-        if dorm_ref(dorm_id).collection("invoices").document(inv_id).get().exists:
-            errors.append(f"ห้อง {room.get('room_no')}: มีบิลเดือนนี้แล้ว")
-            continue
         try:
             new_water, new_elec = float(m["water"]), float(m["elec"])
         except (TypeError, KeyError, ValueError):
@@ -737,7 +804,7 @@ def dorm_generate_invoices():
         total = round(water_cost + elec_cost + rent + garbage_fee + service_fee + extra_total, 2)
         dorm_ref(dorm_id).collection("rooms").document(doc.id).update(
             {"water_meter": new_water, "elec_meter": new_elec})
-        dorm_ref(dorm_id).collection("invoices").document(inv_id).set({
+        dorm_ref(dorm_id).collection("invoices").document().set({
             "dorm_id": dorm_id, "month": month, "year": year, "room_id": doc.id,
             "room_no": room.get("room_no"), "tenant_name": room.get("tenant_name", ""),
             "water_usage": water_usage, "elec_usage": elec_usage,
@@ -755,7 +822,7 @@ def dorm_generate_invoices():
     return jsonify({"success": True, "created": created, "errors": errors,
                     "message": f"สร้างบิลสำเร็จ {created} ใบ" +
                     (f" / มีปัญหา: {'; '.join(errors)}" if errors else "")})
-                   
+
 @app.route("/api/dorm/invoices/<invoice_id>/edit", methods=["POST"])
 def dorm_edit_invoice(invoice_id):
     dorm_id, _ = get_current_dorm()
@@ -790,6 +857,12 @@ def dorm_edit_invoice(invoice_id):
         "extra_fees": extra_fees,
         "total_amount": total
     })
+    if cur.get("prev_water_meter") is not None and cur.get("prev_elec_meter") is not None and cur.get("room_id"):
+        new_wm = round(float(cur.get("prev_water_meter") or 0) + max(0, water_usage), 2)
+        new_em = round(float(cur.get("prev_elec_meter") or 0) + max(0, elec_usage), 2)
+        dorm_ref(dorm_id).collection("rooms").document(cur.get("room_id")).update({
+            "water_meter": new_wm, "elec_meter": new_em
+        })
     return jsonify({"success": True, "message": f"แก้ไขบิลเรียบร้อย ยอดรวมใหม่ {total:.2f} บาท"})
 
 @app.route("/api/dorm/invoices/<invoice_id>/cancel", methods=["POST"])
@@ -922,6 +995,12 @@ def dorm_mark_paid_invoice(invoice_id):
     })
     return jsonify({"success": True, "message": "บันทึกจ่ายแล้ว (เงินสด/จ่ายตรง) เรียบร้อย"})
 
+# 🔒 FIX (บั๊กหลัก): เดิม return เขียนเป็น
+#   return (jsonify(...) if res["success"] else jsonify(...), 400)
+# เพราะ comma มี precedence ต่ำกว่า ternary ทั้งบรรทัดจึงถูกตีความเป็น
+# tuple (ผลลัพธ์ ternary, 400) เสมอ — แปลว่าไม่ว่าจะอนุมัติสำเร็จหรือไม่
+# ก็ตาม Flask จะตอบ HTTP 400 (error) กลับไปทุกครั้ง ทั้งที่ backend
+# อนุมัติสำเร็จจริงแล้ว แยก if/else เป็นคนละบรรทัดเพื่อให้ status code ถูกต้อง
 @app.route("/api/dorm/invoices/<invoice_id>/approve", methods=["POST"])
 def dorm_approve_invoice(invoice_id):
     dorm_id, _ = get_current_dorm()
@@ -929,8 +1008,9 @@ def dorm_approve_invoice(invoice_id):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     res = execute_approve_invoice_transaction(
         db.transaction(), dorm_ref(dorm_id).collection("invoices").document(invoice_id))
-    return (jsonify({"success": True, "message": "อนุมัติแล้ว บิลนี้จ่ายแล้ว"})
-            if res["success"] else jsonify({"success": False, "message": res["message"]}), 400)
+    if res["success"]:
+        return jsonify({"success": True, "message": "อนุมัติแล้ว บิลนี้จ่ายแล้ว"})
+    return jsonify({"success": False, "message": res["message"]}), 400
 
 @app.route("/api/dorm/invoices/<invoice_id>/reject", methods=["POST"])
 def dorm_reject_invoice(invoice_id):
@@ -939,8 +1019,9 @@ def dorm_reject_invoice(invoice_id):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     res = execute_reject_invoice_transaction(
         db.transaction(), dorm_ref(dorm_id).collection("invoices").document(invoice_id))
-    return (jsonify({"success": True, "message": "ปฏิเสธสลิปแล้ว ผู้เช่าส่งใหม่ได้"})
-            if res["success"] else jsonify({"success": False, "message": res["message"]}), 400)
+    if res["success"]:
+        return jsonify({"success": True, "message": "ปฏิเสธสลิปแล้ว ผู้เช่าส่งใหม่ได้"})
+    return jsonify({"success": False, "message": res["message"]}), 400
 
 @app.route("/api/dorm/invoices/<invoice_id>/send_line", methods=["POST"])
 def dorm_send_line(invoice_id):
@@ -1041,8 +1122,6 @@ def dorm_webhook_info():
         token = secrets.token_urlsafe(24)
         dorm_ref(dorm_id).update({"line_webhook_token": token})
     webhook_url = request.url_root.rstrip("/") + "/api/line/webhook/" + token
-    # 🔒 FIX: no longer return the raw Channel Secret to the browser —
-    # only whether it's set, same pattern as line_access_token_set below.
     return jsonify({"success": True, "webhook_url": webhook_url,
                     "line_channel_secret_set": bool(dorm.get("line_channel_secret")),
                     "owner_line_user_id": dorm.get("owner_line_user_id", ""),
@@ -1075,10 +1154,6 @@ def line_webhook(token):
     dorm = dorm_doc.to_dict()
     body = request.get_data()
     secret = dorm.get("line_channel_secret", "")
-    # 🔒 FIX: previously, if a dorm hadn't set a Channel Secret yet, the
-    # signature check was skipped entirely — meaning anyone who guessed
-    # or leaked the webhook token could POST fake events. Now we reject
-    # instead of skipping.
     if not secret:
         return "Webhook not configured", 403
     sig = base64.b64encode(hmac.new(secret.encode(), body, hashlib.sha256).digest()).decode()
@@ -1154,7 +1229,7 @@ def bill_pay(bill_token):
         try:
             resp = requests.post(url, headers=headers, files=files, data={"log": True}, timeout=15)
             res = resp.json()
-        except Exception as e:
+        except Exception:
             return jsonify({"success": False, "message": "ตรวจสลิปผิดพลาด กรุณาลองใหม่"}), 502
         print(f"--- SLIPOK RESPONSE: {res} ---")
         if not res.get("success"):
