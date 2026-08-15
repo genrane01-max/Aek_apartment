@@ -456,7 +456,7 @@ def dorm_login_page():
 
 @app.route("/dorm/admin")
 def dorm_admin_page():
-    dorm_id, dorm = get_current_dorm()
+    dorm_id, dorm = get_current_dorm(allow_expired=True)
     if not dorm_id:
         return redirect("/dorm/login")
     return render_template("dorm_admin.html", dorm=dorm)
