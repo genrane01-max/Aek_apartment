@@ -212,17 +212,25 @@
     </div>
   </div>
   <!-- ===== ออกบิล ===== -->
-  <div class="content" id="tab-bills">
-    <div class="card">
-      <h3>🧾 สร้างบิลประจำเดือน</h3>
-      <div class="row">
-        <div><label>เดือน</label><select id="billMonth"></select></div>
-        <div><label>ปี (พ.ศ.)</label><select id="billYear"></select></div>
-      </div>
-      <button class="btn btn-gold" onclick="openGenModal()">ต่อไป — กรอกมิเตอร์แต่ละห้อง</button>
-      <div class="msg" id="msgBill"></div>
+<div class="content" id="tab-bills">
+  <!-- การ์ดที่ 1: สร้างบิลประจำเดือน -->
+  <div class="card">
+    <h3>🧾 สร้างบิลประจำเดือน</h3>
+    <div class="row">
+      <div><label>เดือน</label><select id="billMonth"></select></div>
+      <div><label>ปี (พ.ศ.)</label><select id="billYear"></select></div>
     </div>
+    <button class="btn btn-gold" onclick="openGenModal()">ต่อไป — กรอกมิเตอร์แต่ละห้อง</button>
+    <div class="msg" id="msgBill"></div>
   </div>
+
+  <!-- การ์ดที่ 2: ออกบิลรายวัน (เพิ่มใหม่) -->
+  <div class="card">
+    <h3>⚡ ออกบิลรายวัน (บิลด่วน — พักชั่วคราว)</h3>
+    <button class="btn btn-gold" onclick="openDailyModal()">⚡ ออกบิลรายวัน</button>
+    <div class="msg" id="msgDaily"></div>
+  </div>
+</div>
 
   <!-- ===== บิล/สลิป ===== -->
   <div class="content" id="tab-invoices">
@@ -352,6 +360,10 @@
     <label>เบอร์โทร</label><input id="erPhone" placeholder="08x-xxx-xxxx">
     <label>LINE User ID</label><input id="erLine" placeholder="U...">
     <label>ค่าเช่า/เดือน (บาท)</label><input id="erRent" type="number" step="0.01">
+    <div class="row">
+      <div><label>มิเตอร์น้ำ (เลขฐาน)</label><input id="erWater" type="number" step="0.01"></div>
+      <div><label>มิเตอร์ไฟ (เลขฐาน)</label><input id="erElec" type="number" step="0.01"></div>
+    </div>
     <label>เงินประกัน (บาท)</label><input id="erDeposit" type="number" step="0.01">
     <label>สถานะเงินประกัน</label>
     <select id="erDepStatus">
@@ -371,6 +383,38 @@
       <button class="mini m-gold" onclick="submitEditRoom()">💾 บันทึก</button>
     </div>
     <div class="msg" id="erMsg"></div>
+  </div>
+</div>
+
+<!-- ===== Modal ออกบิลรายวัน ===== -->
+<div class="modal-overlay" id="dailyModal" style="display:none;">
+  <div class="modal">
+    <span class="modal-x" onclick="closeModal('dailyModal')">✕</span>
+    <h3>⚡ ออกบิลรายวัน (บิลด่วน)</h3>
+    <label>ห้อง</label>
+    <select id="dlRoom"></select>
+    <label>ชื่อผู้เช่า (ไม่บังคับ — ว่างใช้ชื่อเดิม)</label>
+    <input id="dlTenant" placeholder="ชื่อลูกค้าชั่วคราว">
+    <label>วิธีคิดเงิน</label>
+    <select id="dlMode" onchange="dlToggleMode()">
+      <option value="nights">คิดเป็นคืน (จำนวนคืน × ราคา/คืน)</option>
+      <option value="flat">เหมายอดรวม</option>
+    </select>
+    <div id="dlNightsWrap">
+      <div class="row">
+        <div><label>จำนวนคืน</label><input id="dlNights" type="number" min="1" value="1"></div>
+        <div><label>ราคา/คืน (บาท)</label><input id="dlRate" type="number" step="0.01" placeholder="เช่น 500"></div>
+      </div>
+    </div>
+    <div id="dlFlatWrap" style="display:none;">
+      <label>ยอดรวม (บาท)</label><input id="dlFlat" type="number" step="0.01" placeholder="เช่น 1,500">
+    </div>
+    <p style="color:#d4af37; font-size:14px; margin-top:10px;">ยอดรวม: <b id="dlTotal">0</b> บาท</p>
+    <div class="modal-actions">
+      <button class="mini m-gray" onclick="closeModal('dailyModal')">ยกเลิก</button>
+      <button class="mini m-gold" onclick="submitDaily()">✅ สร้างบิล</button>
+    </div>
+    <div class="msg" id="dlMsg"></div>
   </div>
 </div>
 
@@ -527,6 +571,8 @@ function openEditRoom(id){
   document.getElementById('erPhone').value=rm.phone||'';
   document.getElementById('erLine').value=rm.line_user_id||'';
   document.getElementById('erRent').value=rm.rent_amount||'';
+  document.getElementById('erWater').value=rm.water_meter||'';
+  document.getElementById('erElec').value=rm.elec_meter||'';
   document.getElementById('erDeposit').value=rm.deposit_amount||'';
   document.getElementById('erDepStatus').value=rm.deposit_status||'none';
   document.getElementById('erGarbage').value=rm.garbage_fee||'';
@@ -544,6 +590,8 @@ async function submitEditRoom(){
         phone:document.getElementById('erPhone').value,
         line_user_id:document.getElementById('erLine').value,
         rent_amount:document.getElementById('erRent').value,
+        water_meter:document.getElementById('erWater').value,
+        elec_meter:document.getElementById('erElec').value,
         deposit_amount:document.getElementById('erDeposit').value,
         deposit_status:document.getElementById('erDepStatus').value,
         garbage_fee:document.getElementById('erGarbage').value,
@@ -640,16 +688,19 @@ async function loadInvoices(){
     document.getElementById('invRows').innerHTML=invs.map(i=>{
       const stBadge=i.status==='paid'?'<span class="badge b-paid">✅ จ่ายแล้ว</span>'
         :i.status==='waiting_confirm'?'<span class="badge b-waiting">⏳ รอตรวจ</span>'
+        :i.status==='closed'?'<span class="badge b-gray">🔒 ปิดแล้ว</span>'
         :'<span class="badge b-pending">รอจ่าย</span>';
       let act='';
       if(i.status==='waiting_confirm'){ act+=`<button class="mini m-green" onclick="appr('${i.id}')">✅ อนุมัติ</button><button class="mini m-red" onclick="rej('${i.id}')">❌ ปฏิเสธ</button>`;
-      act+=`<button class="mini m-gray" onclick="window.open('/api/dorm/invoices/${i.id}/slip','_blank')">👁️ ดูสลิป</button>`; }
+      act+=`<button class="mini m-gray" onclick="window.open('/api/dorm/invoices/${i.id}/slip','_blank')">👁️ ดูสลิป</button>`;
+      act+=`<button class="mini m-gray" onclick="closeInv('${i.id}','${esc(i.room_no)}')">🔒 ปิดบิล</button>`; }
       act+=`<button class="mini m-gold" onclick="window.open('/api/dorm/invoices/${i.id}/billcard','_blank')">🧾 QR บิล</button>`;
       act+=`<button class="mini m-gray" onclick="copyBill('${esc(i.bill_token)}')">🔗 ลิงก์บิล</button>`;
       if(i.status==='pending'){
         act+=`<button class="mini m-green" onclick="markPaid('${i.id}','${esc(i.room_no)}')">💰 จ่ายแล้ว</button>`;
         act+=`<button class="mini m-gray" onclick="sendLine('${i.id}')">💬 ส่ง LINE</button>`;
         act+=`<button class="mini m-gold" onclick="openEditModal('${i.id}')">✏️ แก้ไข</button>`;
+        act+=`<button class="mini m-gray" onclick="closeInv('${i.id}','${esc(i.room_no)}')">🔒 ปิดบิล</button>`;
         act+=`<button class="mini m-red" onclick="cancelInv('${i.id}','${esc(i.room_no)}')">🗑️ ยกเลิก</button>`;
       }
       return `<tr><td><b>${esc(i.room_no)}</b></td><td>${esc(i.tenant_name||'-')}</td>
@@ -723,6 +774,73 @@ function cancelInv(id,no){
       showMsg('msgInv', d.success?'✅ '+d.message:'❌ '+(d.message||'error'), d.success); loadInvoices();
     }catch(e){ showMsg('msgInv','❌ '+e.message,'false'); }
   });
+}
+
+function closeInv(id,no){
+  askConfirm('🔒 ปิดบิล','ปิดบิลห้อง '+no+'? (ผู้เช่าออกแล้ว — บิลนี้จะไม่นับเป็นยอดค้าง)', async()=>{
+    const r=await fetch('/api/dorm/invoices/'+id+'/close',{method:'POST'}); const d=await r.json();
+    showMsg('msgInv', d.success?'✅ '+d.message:'❌ '+(d.message||'error'), d.success); loadInvoices();
+  });
+}
+
+/* ---- ออกบิลรายวัน (บิลด่วน) ---- */
+function openDailyModal(){
+  const sel=document.getElementById('dlRoom');
+  sel.innerHTML='';
+  const active=roomsCache.filter(r=>r.active!==false);
+  if(!active.length){ showMsg('msgDaily','ยังไม่มีห้องที่ใช้งาน','false'); return; }
+  active.forEach(rm=>{ sel.insertAdjacentHTML('beforeend',`<option value="${rm.id}">ห้อง ${esc(rm.room_no)} — ${esc(rm.tenant_name||'ว่าง')}</option>`); });
+  document.getElementById('dlTenant').value='';
+  document.getElementById('dlNights').value=1;
+  document.getElementById('dlRate').value='';
+  document.getElementById('dlFlat').value='';
+  document.getElementById('dlMode').value='nights';
+  dlToggleMode();
+  document.getElementById('dlMsg').className='msg';
+  document.getElementById('dlTotal').textContent='0';
+  document.getElementById('dailyModal').style.display='flex';
+}
+function dlToggleMode(){
+  const m=document.getElementById('dlMode').value;
+  document.getElementById('dlNightsWrap').style.display=(m==='nights')?'':'none';
+  document.getElementById('dlFlatWrap').style.display=(m==='flat')?'':'none';
+  dlCalc();
+}
+function dlCalc(){
+  const m=document.getElementById('dlMode').value;
+  let total=0;
+  if(m==='nights'){
+    const n=parseFloat(document.getElementById('dlNights').value)||0;
+    const r=parseFloat(document.getElementById('dlRate').value)||0;
+    total=n*r;
+  }else{
+    total=parseFloat(document.getElementById('dlFlat').value)||0;
+  }
+  document.getElementById('dlTotal').textContent=Number(total).toLocaleString('th-TH');
+}
+document.getElementById('dlNights').addEventListener('input',dlCalc);
+document.getElementById('dlRate').addEventListener('input',dlCalc);
+document.getElementById('dlFlat').addEventListener('input',dlCalc);
+async function submitDaily(){
+  const msgEl=document.getElementById('dlMsg');
+  const room_id=document.getElementById('dlRoom').value;
+  if(!room_id){ msgEl.className='msg err'; msgEl.textContent='เลือกห้องก่อน'; return; }
+  const mode=document.getElementById('dlMode').value;
+  const payload={room_id:room_id, tenant_name:document.getElementById('dlTenant').value.trim(), mode:mode};
+  if(mode==='nights'){
+    payload.nights=document.getElementById('dlNights').value;
+    payload.daily_rate=document.getElementById('dlRate').value;
+    if(!(parseFloat(payload.nights)>0 && parseFloat(payload.daily_rate)>0)){ msgEl.className='msg err'; msgEl.textContent='กรอกจำนวนคืนและราคา/คืน'; return; }
+  }else{
+    payload.flat_amount=document.getElementById('dlFlat').value;
+    if(!(parseFloat(payload.flat_amount)>0)){ msgEl.className='msg err'; msgEl.textContent='กรอกยอดรวม'; return; }
+  }
+  try{
+    const r=await fetch('/api/dorm/invoices/generate_daily',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    msgEl.className='msg '+(d.success?'ok':'err'); msgEl.textContent=d.success?'✅ '+d.message:'❌ '+(d.message||'error');
+    if(d.success){ setTimeout(()=>{ closeModal('dailyModal'); switchTab('invoices'); loadInvoices(); },1200); }
+  }catch(e){ msgEl.className='msg err'; msgEl.textContent='❌ '+e.message; }
 }
 
 async function loadAddon(){
