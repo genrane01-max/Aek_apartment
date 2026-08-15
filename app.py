@@ -985,7 +985,7 @@ def dorm_addon_status():
 
 @app.route("/api/dorm/platform_qr", methods=["GET"])
 def dorm_platform_qr():
-    dorm_id, _ = get_current_dorm()
+    dorm_id, _ = get_current_dorm(allow_expired=True)
     if not dorm_id:
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     t = request.args.get("type", "renewal")
@@ -1000,7 +1000,7 @@ def dorm_platform_qr():
 @app.route("/api/dorm/platform_pay", methods=["POST"])
 @limiter.limit("5 per minute")
 def dorm_platform_pay():
-    dorm_id, _ = get_current_dorm()
+    dorm_id, _ = get_current_dorm(allow_expired=True)
     if not dorm_id:
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     t = request.form.get("type", "renewal")
